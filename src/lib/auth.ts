@@ -1,8 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   GoogleAuthProvider,
   signOut,
   sendPasswordResetEmail,
@@ -31,16 +30,8 @@ export async function loginWithEmail(email: string, password: string) {
   return user;
 }
 
-// Popup yerine redirect kullan
 export async function loginWithGoogle() {
-  await signInWithRedirect(auth, googleProvider);
-}
-
-// Redirect sonucu işle
-export async function handleGoogleRedirect() {
-  const result = await getRedirectResult(auth);
-  if (!result) return null;
-  const user = result.user;
+  const { user } = await signInWithPopup(auth, googleProvider);
   const ref = doc(db, 'users', user.uid);
   if (!(await getDoc(ref)).exists()) {
     const parts = (user.displayName || '').split(' ');
