@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { loginWithEmail, loginWithGoogle, resetPassword } from '@/lib/auth';
+import { loginWithEmail, loginWithGoogle, resetPassword, handleGoogleRedirect } from '@/lib/auth';
 import Logo from '@/components/layout/Logo';
 
 const G = <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>;
@@ -15,27 +15,39 @@ export default function GirisPage() {
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState('');
 
+  // Google redirect sonucunu işle
+  useEffect(() => {
+    handleGoogleRedirect().then(user => {
+      if (user) router.push('/panel');
+    }).catch(err => {
+      console.error(err);
+    });
+  }, [router]);
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault(); setError('');
     if(!email||!pw){setError('E-posta ve şifre zorunlu.');return;}
     setLoading(true);
     try { await loginWithEmail(email,pw); router.push('/panel'); }
     catch(err:any) {
-      const m:Record<string,string>={'auth/user-not-found':'Kullanıcı bulunamadı.','auth/wrong-password':'Şifre yanlış.','auth/invalid-credential':'E-posta veya şifre hatalı.'};
-      setError(m[err.code]||'Giriş başarısız.');
+      const m:Record<string,string>={
+        'auth/user-not-found':'Kullanıcı bulunamadı.',
+        'auth/wrong-password':'Şifre yanlış.',
+        'auth/invalid-credential':'E-posta veya şifre hatalı.',
+        'auth/too-many-requests':'Çok fazla deneme. Lütfen bekleyin.',
+      };
+      setError(m[err.code]||'Giriş başarısız: '+err.message);
     } finally { setLoading(false); }
   }
 
   async function handleGoogle() {
     setError(''); setLoading(true);
-    try { await loginWithGoogle(); router.push('/panel'); }
-    catch { setError('Google ile giriş başarısız.'); }
-    finally { setLoading(false); }
+    try { await loginWithGoogle(); }
+    catch { setError('Google ile giriş başarısız.'); setLoading(false); }
   }
 
   return (
     <div className="min-h-screen grid lg:grid-cols-[.9fr_1.1fr]">
-      {/* Sol - dark panel */}
       <div className="hidden lg:flex flex-col justify-between bg-[#2F2622] p-14 relative overflow-hidden">
         <div className="absolute w-[350px] h-[350px] rounded-full bg-[rgba(201,131,46,.1)] blur-[70px] -top-20 -right-20 pointer-events-none"/>
         <div className="absolute w-[250px] h-[250px] rounded-full bg-[rgba(107,124,92,.08)] blur-[70px] -bottom-14 -left-10 pointer-events-none"/>
@@ -60,7 +72,6 @@ export default function GirisPage() {
         </div>
       </div>
 
-      {/* Sağ - form */}
       <div className="flex items-center justify-center bg-[#F7F2EA] p-6 lg:p-12">
         <div className="w-full max-w-[420px]">
           <div className="lg:hidden mb-8 text-center"><Link href="/"><Logo height={44}/></Link></div>
@@ -69,8 +80,10 @@ export default function GirisPage() {
 
           <button onClick={handleGoogle} disabled={loading}
             className="w-full flex items-center justify-center gap-3 bg-white border-[1.5px] border-[rgba(196,169,107,.25)] rounded-[14px] px-4 py-3 text-sm font-medium text-[#5C4A32] mb-5 hover:border-[#8B7355] hover:shadow-md transition-all disabled:opacity-60">
-            {G} Google ile Giriş Yap
+            {loading ? <div className="w-5 h-5 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/> : G}
+            {loading ? 'Yönlendiriliyor…' : 'Google ile Giriş Yap'}
           </button>
+
           <div className="flex items-center gap-3 mb-5 text-[#9A9188] text-xs">
             <span className="flex-1 h-px bg-[#E3D9C6]"/>veya e-posta ile<span className="flex-1 h-px bg-[#E3D9C6]"/>
           </div>
