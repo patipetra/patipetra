@@ -27,7 +27,7 @@ export default function GirisPage() {
         'auth/invalid-credential':'E-posta veya şifre hatalı.',
         'auth/too-many-requests':'Çok fazla deneme. Bekleyin.',
       };
-      setError(m[err.code]||'Hata: '+err.message);
+      setError(m[err.code] || err.code + ': ' + err.message);
     } finally { setLoading(false); }
   }
 
