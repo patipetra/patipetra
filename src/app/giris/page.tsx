@@ -14,17 +14,26 @@ export default function GirisPage() {
   const [show,setShow]=useState(false);
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState('');
+  const [info,setInfo]=useState('');
 
   async function handleLogin(e: React.FormEvent) {
-    e.preventDefault(); setError('');
+    e.preventDefault();
+    setError(''); setInfo('');
     if(!email||!pw){setError('E-posta ve şifre zorunlu.');return;}
     setLoading(true);
-    try { await loginWithEmail(email,pw); router.push('/panel'); }
-    catch(err:any) {
+    setInfo('Giriş yapılıyor...');
+    try {
+      const user = await loginWithEmail(email,pw);
+      setInfo('Başarılı! Yönlendiriliyor...');
+      console.log('Login success:', user.uid);
+      window.location.href = '/panel';
+    } catch(err:any) {
+      console.error('Login error:', err.code, err.message);
       const m:Record<string,string>={
         'auth/user-not-found':'Kullanıcı bulunamadı.',
         'auth/wrong-password':'Şifre yanlış.',
         'auth/invalid-credential':'E-posta veya şifre hatalı.',
+        'auth/invalid-email':'Geçersiz e-posta.',
         'auth/too-many-requests':'Çok fazla deneme. Bekleyin.',
       };
       setError(m[err.code] || err.code + ': ' + err.message);
@@ -32,23 +41,24 @@ export default function GirisPage() {
   }
 
   async function handleGoogle() {
-    setError(''); setLoading(true);
-    try { await loginWithGoogle(); router.push('/panel'); }
-    catch(err:any) { setError('Google girişi başarısız: '+err.message); }
-    finally { setLoading(false); }
+    setError(''); setInfo(''); setLoading(true);
+    try {
+      await loginWithGoogle();
+      window.location.href = '/panel';
+    } catch(err:any) {
+      setError('Google girişi başarısız: ' + err.message);
+    } finally { setLoading(false); }
   }
 
   return (
     <div className="min-h-screen grid lg:grid-cols-[.9fr_1.1fr]">
       <div className="hidden lg:flex flex-col justify-between bg-[#2F2622] p-14 relative overflow-hidden">
         <div className="absolute w-[350px] h-[350px] rounded-full bg-[rgba(201,131,46,.1)] blur-[70px] -top-20 -right-20 pointer-events-none"/>
-        <div className="absolute w-[250px] h-[250px] rounded-full bg-[rgba(107,124,92,.08)] blur-[70px] -bottom-14 -left-10 pointer-events-none"/>
         <Link href="/" className="relative z-10"><Logo dark height={40}/></Link>
         <div className="relative z-10 my-10">
           <h2 className="font-serif text-[clamp(28px,3vw,40px)] font-light text-white leading-[1.05] mb-3">
             Petiniz için <em className="italic text-[#E8B86D]">her şey</em> tek platformda
           </h2>
-          <p className="text-sm text-white/50 leading-relaxed mb-7">Pet profili, veteriner, sahiplendirme ve mağaza.</p>
           <div className="flex flex-col gap-3">
             {[{i:'🐾',t:'Pet Pasaport',d:'Aşı, muayene geçmişi tek yerde'},{i:'🩺',t:'Veteriner İletişimi',d:'Doğrulanmış vet, hızlı yanıt'},{i:'📢',t:'81 İlde İlan',d:'Güvenli sahiplendirme'},{i:'🛍',t:'Premium Mağaza',d:'Vet önerili ürünler'}].map(f=>(
               <div key={f.t} className="flex items-start gap-3 bg-white/5 border border-white/[.07] rounded-[14px] p-3">
@@ -63,20 +73,26 @@ export default function GirisPage() {
           <p className="text-[11px] text-white/35">Merve D. · İstanbul · Scottish Fold sahibi</p>
         </div>
       </div>
+
       <div className="flex items-center justify-center bg-[#F7F2EA] p-6 lg:p-12">
         <div className="w-full max-w-[420px]">
           <div className="lg:hidden mb-8 text-center"><Link href="/"><Logo height={44}/></Link></div>
           <h1 className="font-serif text-[clamp(24px,4vw,32px)] font-semibold text-[#2F2622] mb-1">Tekrar hoş geldiniz 🐾</h1>
           <p className="text-sm text-[#7A7368] mb-6">Hesabınıza giriş yapın.</p>
+
           <button onClick={handleGoogle} disabled={loading}
             className="w-full flex items-center justify-center gap-3 bg-white border-[1.5px] border-[rgba(196,169,107,.25)] rounded-[14px] px-4 py-3 text-sm font-medium text-[#5C4A32] mb-5 hover:border-[#8B7355] hover:shadow-md transition-all disabled:opacity-60">
             {loading?<div className="w-5 h-5 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/>:G}
-            {loading?'Giriş yapılıyor…':'Google ile Giriş Yap'}
+            Google ile Giriş Yap
           </button>
+
           <div className="flex items-center gap-3 mb-5 text-[#9A9188] text-xs">
             <span className="flex-1 h-px bg-[#E3D9C6]"/>veya e-posta ile<span className="flex-1 h-px bg-[#E3D9C6]"/>
           </div>
+
           {error&&<div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-[12px] px-4 py-3 mb-4">{error}</div>}
+          {info&&<div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-[12px] px-4 py-3 mb-4">{info}</div>}
+
           <form onSubmit={handleLogin} noValidate>
             <div className="mb-3">
               <label className="block text-[10px] font-medium tracking-[.1em] uppercase text-[#7A7368] mb-1" htmlFor="l-email">E-posta</label>
@@ -92,14 +108,14 @@ export default function GirisPage() {
               </div>
               <button type="button" onClick={async()=>{
                 if(!email){setError('Şifre sıfırlamak için e-posta girin.');return;}
-                try{await resetPassword(email);alert('Şifre sıfırlama e-postası gönderildi.');}
-                catch{setError('E-posta gönderilemedi.');}
+                try{await resetPassword(email);setInfo('Şifre sıfırlama e-postası gönderildi.');}
+                catch(err:any){setError('Hata: '+err.message);}
               }} className="block text-right text-[12px] text-[#8B7355] mt-1 hover:text-[#C9832E] w-full transition-colors">
                 Şifremi unuttum
               </button>
             </div>
             <button type="submit" disabled={loading}
-              className="w-full mt-4 py-[13px] rounded-[14px] bg-[#5C4A32] text-white text-[15px] font-medium hover:bg-[#2F2622] hover:-translate-y-[1px] transition-all disabled:opacity-60">
+              className="w-full mt-4 py-[13px] rounded-[14px] bg-[#5C4A32] text-white text-[15px] font-medium hover:bg-[#2F2622] transition-all disabled:opacity-60">
               {loading?'Giriş yapılıyor…':'Giriş Yap →'}
             </button>
           </form>
