@@ -1,47 +1,10 @@
-import type { Metadata } from 'next';
+'use client';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-
-export const metadata: Metadata = {
-  title: 'Patıpetra — Türkiye\'nin Pet Yaşam Platformu',
-  description: 'Pet profili, veteriner, sahiplendirme ve mağaza. Türkiye\'nin en kapsamlı pet platformu.',
-  alternates: { canonical: 'https://patipetra.com' },
-};
-
-// Ana sayfa server component — gerçek veriler
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-
-async function getActiveListings() {
-  try {
-    const snap = await getDocs(query(
-      collection(db,'listings'),
-      where('status','==','active'),
-      orderBy('createdAt','desc'),
-      limit(6)
-    ));
-    return snap.docs.map(d=>({id:d.id,...d.data()}));
-  } catch { return []; }
-}
-
-async function getActiveVets() {
-  try {
-    const snap = await getDocs(collection(db,'vets'));
-    return snap.docs.map(d=>({id:d.id,...d.data()})).filter((v:any)=>v.status==='active').slice(0,3);
-  } catch { return []; }
-}
-
-async function getActiveServices() {
-  try {
-    const snap = await getDocs(query(
-      collection(db,'services'),
-      where('status','==','active'),
-      limit(3)
-    ));
-    return snap.docs.map(d=>({id:d.id,...d.data()}));
-  } catch { return []; }
-}
 
 const SPECIES_EMOJI: Record<string,string> = {
   cat:'🐱', dog:'🐶', bird:'🐦', rabbit:'🐰',
@@ -54,12 +17,28 @@ const SERVICE_ICON: Record<string,string> = {
   groomer:'✂️', hotel:'🏨', trainer:'🎓', vet:'🩺'
 };
 
-export default async function HomePage() {
-  const [listings, vets, services] = await Promise.all([
-    getActiveListings(),
-    getActiveVets(),
-    getActiveServices(),
-  ]);
+export default function HomePage() {
+  const [listings, setListings] = useState<any[]>([]);
+  const [vets,     setVets]     = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [loading,  setLoading]  = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [lSnap, vSnap, sSnap] = await Promise.all([
+          getDocs(query(collection(db,'listings'), where('status','==','active'), orderBy('createdAt','desc'), limit(6))),
+          getDocs(collection(db,'vets')),
+          getDocs(query(collection(db,'services'), where('status','==','active'), limit(3))),
+        ]);
+        setListings(lSnap.docs.map(d=>({id:d.id,...d.data()})));
+        setVets(vSnap.docs.map(d=>({id:d.id,...d.data()})).filter((v:any)=>v.status==='active').slice(0,3));
+        setServices(sSnap.docs.map(d=>({id:d.id,...d.data()})));
+      } catch(e) { console.error(e); }
+      finally { setLoading(false); }
+    }
+    load();
+  }, []);
 
   return (
     <>
@@ -93,12 +72,7 @@ export default async function HomePage() {
                 </Link>
               </div>
               <div className="flex flex-wrap gap-6">
-                {[
-                  {n:'10K+', l:'Pet Sahibi'},
-                  {n:'500+', l:'Veteriner'},
-                  {n:'81',   l:'İl'},
-                  {n:'%100', l:'Güvenli'},
-                ].map(s=>(
+                {[{n:'10K+',l:'Pet Sahibi'},{n:'500+',l:'Veteriner'},{n:'81',l:'İl'},{n:'%100',l:'Güvenli'}].map(s=>(
                   <div key={s.l}>
                     <div className="font-serif text-2xl font-semibold text-[#E8B86D]">{s.n}</div>
                     <div className="text-xs text-white/40 mt-[2px]">{s.l}</div>
@@ -114,10 +88,10 @@ export default async function HomePage() {
           <div className="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-16">
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                {icon:'🐾', title:'Pet Pasaport',    desc:'Aşı ve sağlık geçmişi',        href:'/panel/petlerim' },
-                {icon:'🩺', title:'Veterinerler',    desc:'Doğrulanmış uzmanlar',          href:'/veterinerler'   },
-                {icon:'📢', title:'Sahiplendirme',   desc:'81 ilde güvenli ilan',          href:'/ilanlar'        },
-                {icon:'💬', title:'Topluluklar',     desc:'Irk bazlı pet topluluğu',       href:'/topluluk'       },
+                {icon:'🐾', title:'Pet Pasaport',  desc:'Aşı ve sağlık geçmişi',    href:'/panel/petlerim'},
+                {icon:'🩺', title:'Veterinerler',  desc:'Doğrulanmış uzmanlar',      href:'/veterinerler'  },
+                {icon:'📢', title:'Sahiplendirme', desc:'81 ilde güvenli ilan',      href:'/ilanlar'       },
+                {icon:'💬', title:'Topluluklar',   desc:'Irk bazlı pet topluluğu',   href:'/topluluk'      },
               ].map(f=>(
                 <Link key={f.title} href={f.href}
                   className="bg-white rounded-[20px] p-6 border border-[rgba(196,169,107,.12)] hover:shadow-lg hover:-translate-y-1 transition-all block">
@@ -130,33 +104,28 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Güncel İlanlar */}
+        {/* İlanlar */}
         <section className="py-16 bg-white">
           <div className="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-16">
             <div className="flex items-center justify-between mb-8">
               <div>
                 <div className="text-[11px] font-semibold tracking-[.28em] uppercase text-[#8B7355] mb-2">Sahiplendirme</div>
-                <h2 className="font-serif text-[clamp(24px,4vw,36px)] font-light text-[#2F2622]">
-                  Yuva bekleyen <em className="italic text-[#C9832E]">dostlar</em>
-                </h2>
+                <h2 className="font-serif text-[clamp(24px,4vw,36px)] font-light text-[#2F2622]">Yuva bekleyen <em className="italic text-[#C9832E]">dostlar</em></h2>
               </div>
-              <Link href="/ilanlar" className="hidden sm:inline-flex border border-[#8B7355] text-[#5C4A32] text-sm font-medium px-5 py-2 rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">
-                Tüm İlanlar →
-              </Link>
+              <Link href="/ilanlar" className="hidden sm:inline-flex border border-[#8B7355] text-[#5C4A32] text-sm font-medium px-5 py-2 rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">Tüm İlanlar →</Link>
             </div>
-
-            {listings.length === 0 ? (
+            {loading ? (
+              <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div>
+            ) : listings.length === 0 ? (
               <div className="text-center py-12 bg-[#F7F2EA] rounded-[20px]">
                 <div className="text-4xl mb-3">🐾</div>
                 <p className="text-[#7A7368] mb-4">Henüz aktif ilan yok.</p>
-                <Link href="/panel/ilanlarim" className="inline-flex bg-[#C9832E] text-white text-sm font-semibold px-5 py-2 rounded-full hover:bg-[#b87523]">
-                  İlk İlanı Ver →
-                </Link>
+                <Link href="/panel/ilanlarim" className="inline-flex bg-[#C9832E] text-white text-sm font-semibold px-5 py-2 rounded-full hover:bg-[#b87523]">İlk İlanı Ver →</Link>
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {listings.map((l:any)=>(
-                  <Link key={l.id} href={`/ilanlar`}
+                  <Link key={l.id} href="/ilanlar"
                     className="bg-[#F7F2EA] rounded-[20px] overflow-hidden border border-[rgba(196,169,107,.12)] hover:shadow-lg hover:-translate-y-1 transition-all block">
                     <div className="h-[180px] bg-[#EDE5D3] flex items-center justify-center text-5xl overflow-hidden">
                       {l.imageUrls?.[0]
@@ -168,45 +137,32 @@ export default async function HomePage() {
                     <div className="p-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-serif text-lg font-semibold text-[#2F2622]">{l.name}</span>
-                        <span className="text-[10px] bg-[rgba(201,131,46,.1)] text-[#C9832E] px-2 py-[2px] rounded-full font-semibold">
-                          {TYPE_LABEL[l.type]||l.type}
-                        </span>
+                        <span className="text-[10px] bg-[rgba(201,131,46,.1)] text-[#C9832E] px-2 py-[2px] rounded-full font-semibold">{TYPE_LABEL[l.type]||l.type}</span>
                       </div>
-                      <div className="text-xs text-[#7A7368] mb-2">
-                        {l.breed&&`${l.breed} · `}{l.age&&`${l.age} · `}📍 {l.city}
-                      </div>
+                      <div className="text-xs text-[#7A7368] mb-2">{l.breed&&`${l.breed} · `}{l.age&&`${l.age} · `}📍 {l.city}</div>
                       <div className="flex flex-wrap gap-1">
-                        {l.isVaccinated && <span className="text-[10px] bg-white text-[#6E5A40] px-2 py-[2px] rounded-full">Aşılı</span>}
-                        {l.isSterilized && <span className="text-[10px] bg-white text-[#6E5A40] px-2 py-[2px] rounded-full">Kısır</span>}
-                        {l.isUrgent     && <span className="text-[10px] bg-red-50 text-red-500 px-2 py-[2px] rounded-full">Acil</span>}
+                        {l.isVaccinated&&<span className="text-[10px] bg-white text-[#6E5A40] px-2 py-[2px] rounded-full">Aşılı</span>}
+                        {l.isSterilized&&<span className="text-[10px] bg-white text-[#6E5A40] px-2 py-[2px] rounded-full">Kısır</span>}
+                        {l.isUrgent&&<span className="text-[10px] bg-red-50 text-red-500 px-2 py-[2px] rounded-full">Acil</span>}
                       </div>
                     </div>
                   </Link>
                 ))}
               </div>
             )}
-            <div className="text-center mt-6 sm:hidden">
-              <Link href="/ilanlar" className="inline-flex border border-[#8B7355] text-[#5C4A32] text-sm font-medium px-5 py-2 rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">
-                Tüm İlanlar →
-              </Link>
-            </div>
           </div>
         </section>
 
         {/* Veterinerler */}
-        {vets.length > 0 && (
+        {!loading && vets.length > 0 && (
           <section className="py-16 bg-[#F7F2EA]">
             <div className="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-16">
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <div className="text-[11px] font-semibold tracking-[.28em] uppercase text-[#8B7355] mb-2">Uzman Kadro</div>
-                  <h2 className="font-serif text-[clamp(24px,4vw,36px)] font-light text-[#2F2622]">
-                    Doğrulanmış <em className="italic text-[#C9832E]">veterinerler</em>
-                  </h2>
+                  <h2 className="font-serif text-[clamp(24px,4vw,36px)] font-light text-[#2F2622]">Doğrulanmış <em className="italic text-[#C9832E]">veterinerler</em></h2>
                 </div>
-                <Link href="/veterinerler" className="hidden sm:inline-flex border border-[#8B7355] text-[#5C4A32] text-sm font-medium px-5 py-2 rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">
-                  Tüm Veterinerler →
-                </Link>
+                <Link href="/veterinerler" className="hidden sm:inline-flex border border-[#8B7355] text-[#5C4A32] text-sm font-medium px-5 py-2 rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">Tüm Veterinerler →</Link>
               </div>
               <div className="grid sm:grid-cols-3 gap-5">
                 {vets.map((v:any)=>(
@@ -219,7 +175,7 @@ export default async function HomePage() {
                           ? <img src={v.avatar} alt={v.name} className="w-full h-full object-cover"/>
                           : '🩺'
                         }
-                        {v.online && <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-white"/>}
+                        {v.online&&<div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-white"/>}
                       </div>
                       <div>
                         <div className="font-serif text-base font-semibold text-[#2F2622]">{v.name}</div>
@@ -232,7 +188,7 @@ export default async function HomePage() {
                         <span key={s} className="text-[10px] bg-[#F7F2EA] text-[#6E5A40] px-2 py-[2px] rounded-full">{s}</span>
                       ))}
                     </div>
-                    {v.rating>0 && <div className="text-xs text-[#7A7368]">⭐ {v.rating} ({v.reviewCount||0} yorum)</div>}
+                    {v.rating>0&&<div className="text-xs text-[#7A7368]">⭐ {v.rating} ({v.reviewCount||0} yorum)</div>}
                   </Link>
                 ))}
               </div>
@@ -241,23 +197,19 @@ export default async function HomePage() {
         )}
 
         {/* Hizmetler */}
-        {services.length > 0 && (
+        {!loading && services.length > 0 && (
           <section className="py-16 bg-white">
             <div className="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-16">
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <div className="text-[11px] font-semibold tracking-[.28em] uppercase text-[#8B7355] mb-2">Onaylı İşletmeler</div>
-                  <h2 className="font-serif text-[clamp(24px,4vw,36px)] font-light text-[#2F2622]">
-                    Profesyonel <em className="italic text-[#C9832E]">pet hizmetleri</em>
-                  </h2>
+                  <h2 className="font-serif text-[clamp(24px,4vw,36px)] font-light text-[#2F2622]">Profesyonel <em className="italic text-[#C9832E]">pet hizmetleri</em></h2>
                 </div>
-                <Link href="/hizmetler" className="hidden sm:inline-flex border border-[#8B7355] text-[#5C4A32] text-sm font-medium px-5 py-2 rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">
-                  Tüm Hizmetler →
-                </Link>
+                <Link href="/hizmetler" className="hidden sm:inline-flex border border-[#8B7355] text-[#5C4A32] text-sm font-medium px-5 py-2 rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">Tüm Hizmetler →</Link>
               </div>
               <div className="grid sm:grid-cols-3 gap-5">
                 {services.map((s:any)=>(
-                  <Link key={s.id} href={`/hizmetler/${s.slug}`}
+                  <Link key={s.id} href={`/hizmetler/${s.slug||s.id}`}
                     className="bg-[#F7F2EA] rounded-[20px] overflow-hidden border border-[rgba(196,169,107,.12)] hover:shadow-lg hover:-translate-y-1 transition-all block">
                     <div className="h-[140px] overflow-hidden bg-[#EDE5D3] flex items-center justify-center text-4xl">
                       {s.coverUrl
@@ -267,12 +219,9 @@ export default async function HomePage() {
                       }
                     </div>
                     <div className="p-4">
-                      <div className="text-[10px] font-semibold text-[#C9832E] mb-1">
-                        {SERVICE_ICON[s.type]} {s.type==='groomer'?'Pet Kuaför':s.type==='hotel'?'Pet Otel':s.type==='trainer'?'Pet Eğitmen':'Hizmet'}
-                      </div>
+                      <div className="text-[10px] font-semibold text-[#C9832E] mb-1">{SERVICE_ICON[s.type]} {s.type==='groomer'?'Pet Kuaför':s.type==='hotel'?'Pet Otel':s.type==='trainer'?'Pet Eğitmen':'Hizmet'}</div>
                       <div className="font-serif text-base font-semibold text-[#2F2622] mb-1">{s.businessName}</div>
                       <div className="text-xs text-[#7A7368]">📍 {s.city}{s.district?`, ${s.district}`:''}</div>
-                      {s.rating>0 && <div className="text-xs text-[#7A7368] mt-1">⭐ {s.rating}</div>}
                     </div>
                   </Link>
                 ))}
@@ -285,19 +234,11 @@ export default async function HomePage() {
         <section className="py-20 bg-[#2F2622]">
           <div className="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-16 text-center">
             <div className="text-5xl mb-6">🐾</div>
-            <h2 className="font-serif text-[clamp(28px,5vw,52px)] font-light text-white mb-4">
-              Petiniz için en iyisini <em className="italic text-[#E8B86D]">hak ediyor</em>
-            </h2>
-            <p className="text-white/50 text-[clamp(14px,1.8vw,16px)] mb-8 max-w-[480px] mx-auto leading-relaxed">
-              Ücretsiz kayıt ol, pet profilini oluştur ve Türkiye'nin en büyük pet platformuna katıl.
-            </p>
+            <h2 className="font-serif text-[clamp(28px,5vw,52px)] font-light text-white mb-4">Petiniz için en iyisini <em className="italic text-[#E8B86D]">hak ediyor</em></h2>
+            <p className="text-white/50 text-[clamp(14px,1.8vw,16px)] mb-8 max-w-[480px] mx-auto leading-relaxed">Ücretsiz kayıt ol, pet profilini oluştur ve Türkiye'nin en büyük pet platformuna katıl.</p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link href="/kayit" className="inline-flex bg-[#C9832E] text-white text-[15px] font-semibold px-8 py-3 rounded-full hover:bg-[#b87523] transition-all">
-                Hemen Başla →
-              </Link>
-              <Link href="/ilanlar" className="inline-flex border border-white/20 text-white text-[15px] font-medium px-8 py-3 rounded-full hover:bg-white/10 transition-all">
-                İlanları İncele
-              </Link>
+              <Link href="/kayit" className="inline-flex bg-[#C9832E] text-white text-[15px] font-semibold px-8 py-3 rounded-full hover:bg-[#b87523] transition-all">Hemen Başla →</Link>
+              <Link href="/ilanlar" className="inline-flex border border-white/20 text-white text-[15px] font-medium px-8 py-3 rounded-full hover:bg-white/10 transition-all">İlanları İncele</Link>
             </div>
           </div>
         </section>
