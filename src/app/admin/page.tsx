@@ -7,6 +7,7 @@ import { isAdmin } from '@/lib/admin';
 import { getAllListings, approveListing, rejectListing, type Listing } from '@/lib/listings';
 import {
   collection, getDocs, query, orderBy, updateDoc, doc, where,
+  addDoc, serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
