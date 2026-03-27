@@ -11,6 +11,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from './firebase';
+import { sendEmailVerification } from 'firebase/auth';
 
 const googleProvider = new GoogleAuthProvider();
 
