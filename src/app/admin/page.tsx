@@ -18,6 +18,7 @@ const NAV = [
   { id:'services',   icon:'🏪', label:'Hizmet Başvuruları'},
   { id:'users',      icon:'👥', label:'Kullanıcılar'      },
   { id:'settings',   icon:'⚙',  label:'Ayarlar'           },
+  { id:'vetapps',    icon:'🩺', label:'Veteriner Başvuruları' },
 ];
 
 export default function AdminPage() {
@@ -104,6 +105,7 @@ export default function AdminPage() {
           {active==='services'  && <ServicesView/>}
           {active==='users'     && <UsersView/>}
           {active==='settings'  && <SettingsView/>}
+          {active==='vetapps'  && <VetApplicationsView/>}
         </main>
       </div>
     </div>
@@ -635,6 +637,358 @@ function SettingsView() {
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+// Bu satırı sil - sadece aşağıdaki fonksiyonu ekle
+
+// ── Veteriner Başvuruları ─────────────────────────────────────────────────────
+function VetApplicationsView() {
+  const [apps,       setApps]       = useState<any[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [filter,     setFilter]     = useState('pending');
+  const [selected,   setSelected]   = useState<any|null>(null);
+  const [processing, setProcessing] = useState<string|null>(null);
+  const [adminNote,  setAdminNote]  = useState('');
+  const [meetDate,   setMeetDate]   = useState('');
+  const [showContract, setShowContract] = useState(false);
+  const [contractData, setContractData] = useState({
+    startDate:   new Date().toISOString().split('T')[0],
+    endDate:     '',
+    monthlyFee:  '599',
+    yearlyFee:   '5990',
+    planType:    'monthly',
+    notes:       '',
+  });
+
+  useEffect(() => { load(); }, []);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const snap = await getDocs(query(collection(db,'vetApplications'), orderBy('createdAt','desc')));
+      setApps(snap.docs.map(d=>({id:d.id,...d.data()})));
+    } catch(e){console.error(e);}
+    finally{setLoading(false);}
+  }
+
+  async function updateStatus(id: string, status: string, extra: any = {}) {
+    setProcessing(id);
+    try {
+      await updateDoc(doc(db,'vetApplications',id), {
+        status, ...extra,
+        updatedAt: serverTimestamp(),
+      });
+      setApps(prev=>prev.map(a=>a.id===id?{...a,status,...extra}:a));
+      if (selected?.id===id) setSelected((prev: any)=>({...prev,status,...extra}));
+    } catch(e:any){alert('Hata: '+e.message);}
+    finally{setProcessing(null);}
+  }
+
+  async function sendMeetingRequest(app: any) {
+    if (!meetDate) { alert('Görüşme tarihi seçin.'); return; }
+    await updateStatus(app.id, 'meeting_scheduled', {
+      meetingDate: meetDate,
+      adminNotes:  adminNote,
+    });
+    setMeetDate('');
+  }
+
+  async function sendContract(app: any) {
+    if (!user) return;
+    // Sözleşme Firestore'a kaydet
+    await addDoc(collection(db,'vetContracts'), {
+      vetApplicationId: app.id,
+      vetUserId:        app.userId,
+      vetName:          `${app.title} ${app.name}`,
+      clinicName:       app.clinicName,
+      city:             app.city,
+      ...contractData,
+      status:           'sent',
+      sentAt:           serverTimestamp(),
+      sentBy:           user?.uid,
+      signedAt:         null,
+    });
+    await updateStatus(app.id, 'contract_sent', {contractSentAt: new Date().toISOString()});
+    setShowContract(false);
+    alert('Sözleşme gönderildi!');
+  }
+
+  async function approveVet(app: any) {
+    if (!confirm(`${app.title} ${app.name} onaylanacak. Emin misiniz?`)) return;
+    // Kullanıcı rolünü vet yap
+    try {
+      await updateDoc(doc(db,'users',app.userId), {
+        role:        'vet',
+        vetSlug:     app.slug,
+        updatedAt:   serverTimestamp(),
+      });
+    } catch(e) { console.error('User update error:', e); }
+    // Vets koleksiyonuna ekle
+    try {
+      await addDoc(collection(db,'vets'), {
+        userId:      app.userId,
+        name:        `${app.title} ${app.name}`,
+        slug:        app.slug,
+        clinic:      app.clinicName,
+        city:        app.city,
+        district:    app.district||'',
+        phone:       app.phone,
+        email:       app.email,
+        website:     app.website||'',
+        instagram:   app.instagram||'',
+        spec:        app.specs||[],
+        bio:         app.bio||'',
+        education:   app.education,
+        gradYear:    app.gradYear||'',
+        experience:  app.experience||'',
+        workingHours:app.workHours||'',
+        avatar:      app.avatarUrl||'',
+        rating:      0,
+        reviewCount: 0,
+        online:      false,
+        verified:    true,
+        planType:    app.planType||'monthly',
+        status:      'active',
+        createdAt:   serverTimestamp(),
+      });
+    } catch(e) { console.error('Vet create error:', e); }
+    await updateStatus(app.id,'approved',{approvedAt:new Date().toISOString()});
+    alert('Veteriner onaylandı ve profili yayına alındı!');
+  }
+
+  async function rejectApp(app: any) {
+    const reason = prompt('Red sebebi:');
+    if (!reason) return;
+    await updateStatus(app.id,'rejected',{rejectionReason:reason});
+  }
+
+  const filtered = apps.filter(a => filter==='all' ? true : a.status===filter);
+
+  const STATUS_LABEL: Record<string,string> = {
+    pending:           'Bekliyor',
+    reviewing:         'İnceleniyor',
+    meeting_scheduled: 'Görüşme Planlandı',
+    contract_sent:     'Sözleşme Gönderildi',
+    approved:          'Onaylandı',
+    rejected:          'Reddedildi',
+  };
+  const STATUS_COLOR: Record<string,string> = {
+    pending:           'bg-[rgba(201,131,46,.15)] text-[#C9832E]',
+    reviewing:         'bg-blue-500/15 text-blue-400',
+    meeting_scheduled: 'bg-purple-500/15 text-purple-400',
+    contract_sent:     'bg-yellow-500/15 text-yellow-500',
+    approved:          'bg-green-500/15 text-green-400',
+    rejected:          'bg-red-500/15 text-red-400',
+  };
+
+  const FILTERS = [
+    {val:'pending',           label:'Bekleyen'          },
+    {val:'reviewing',         label:'İnceleniyor'       },
+    {val:'meeting_scheduled', label:'Görüşme'           },
+    {val:'contract_sent',     label:'Sözleşme'          },
+    {val:'approved',          label:'Onaylı'            },
+    {val:'all',               label:'Tümü'              },
+  ];
+
+  return (
+    <div>
+      {/* Detay modal */}
+      {selected && (
+        <div className="fixed inset-0 bg-black/70 z-[800] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#1a1a2e] border border-white/[.1] rounded-[20px] w-full max-w-[700px] p-6 my-8">
+            <div className="flex items-start justify-between gap-4 mb-6">
+              <div>
+                <h3 className="text-xl font-semibold text-white">{selected.title} {selected.name}</h3>
+                <div className="text-sm text-white/40">{selected.clinicName} · {selected.city}</div>
+                <span className={`inline-block mt-2 text-[10px] font-semibold px-2 py-[2px] rounded-full ${STATUS_COLOR[selected.status]}`}>
+                  {STATUS_LABEL[selected.status]}
+                </span>
+              </div>
+              <button onClick={()=>setSelected(null)} className="w-8 h-8 rounded-full bg-white/[.06] flex items-center justify-center text-white/50 hover:bg-white/[.1]">✕</button>
+            </div>
+
+            {/* Bilgiler */}
+            <div className="grid grid-cols-2 gap-3 mb-5 text-sm">
+              {[
+                {l:'Telefon',    v:selected.phone},
+                {l:'E-posta',    v:selected.email},
+                {l:'Şehir',      v:`${selected.city} ${selected.district||''}`},
+                {l:'Eğitim',     v:selected.education},
+                {l:'Mezuniyet',  v:selected.gradYear},
+                {l:'Deneyim',    v:`${selected.experience} yıl`},
+                {l:'Plan',       v:selected.planType==='yearly'?'Yıllık':'Aylık'},
+                {l:'Başvuru',    v:selected.createdAt?.toDate?.()?.toLocaleDateString('tr-TR')||''},
+              ].map(f=>(
+                <div key={f.l} className="bg-white/[.04] rounded-[10px] p-3">
+                  <div className="text-[10px] uppercase tracking-[.1em] text-white/30 mb-1">{f.l}</div>
+                  <div className="text-white/80 text-xs">{f.v}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Uzmanlıklar */}
+            <div className="mb-4">
+              <div className="text-[10px] uppercase tracking-[.1em] text-white/30 mb-2">Uzmanlık Alanları</div>
+              <div className="flex flex-wrap gap-1">
+                {(selected.specs||[]).map((s: string)=>(
+                  <span key={s} className="text-[10px] bg-white/[.08] text-white/60 px-2 py-[2px] rounded-full">{s}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Bio */}
+            {selected.bio && (
+              <div className="bg-white/[.04] rounded-[12px] p-4 mb-4 text-sm text-white/60 leading-relaxed">{selected.bio}</div>
+            )}
+
+            {/* Diploma */}
+            {selected.diplomaUrl && (
+              <a href={selected.diplomaUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-[#C9832E] hover:underline mb-4">
+                📄 Diploma/Sertifika Görüntüle →
+              </a>
+            )}
+
+            {/* Admin not */}
+            <div className="mb-4">
+              <label className="block text-[10px] uppercase tracking-[.1em] text-white/30 mb-1">Admin Notu</label>
+              <textarea value={adminNote||selected.adminNotes||''} onChange={e=>setAdminNote(e.target.value)}
+                placeholder="İç not…" rows={2}
+                className="w-full px-3 py-2 rounded-[10px] bg-white/[.06] border border-white/[.1] text-white/70 text-sm focus:outline-none focus:border-[#C9832E] resize-none"/>
+            </div>
+
+            {/* Görüşme planla */}
+            {['pending','reviewing'].includes(selected.status) && (
+              <div className="border border-white/[.08] rounded-[14px] p-4 mb-4">
+                <div className="text-sm font-semibold text-white/70 mb-3">📅 Görüntülü Görüşme Planla</div>
+                <div className="flex gap-2">
+                  <input type="datetime-local" value={meetDate} onChange={e=>setMeetDate(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-[10px] bg-white/[.06] border border-white/[.1] text-white/70 text-sm focus:outline-none focus:border-[#C9832E]"/>
+                  <button onClick={()=>sendMeetingRequest(selected)} disabled={!meetDate||!!processing}
+                    className="px-4 py-2 rounded-[10px] bg-purple-500/20 text-purple-300 text-sm hover:bg-purple-500/30 transition-colors disabled:opacity-50 whitespace-nowrap">
+                    Davet Gönder
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Sözleşme gönder */}
+            {['meeting_scheduled','reviewing'].includes(selected.status) && (
+              <div className="border border-white/[.08] rounded-[14px] p-4 mb-4">
+                <button onClick={()=>setShowContract(v=>!v)} className="text-sm font-semibold text-yellow-400 mb-3 flex items-center gap-2">
+                  📋 Dijital Sözleşme Oluştur {showContract?'▲':'▼'}
+                </button>
+                {showContract && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] text-white/30 mb-1">Başlangıç Tarihi</label>
+                        <input type="date" value={contractData.startDate} onChange={e=>setContractData(p=>({...p,startDate:e.target.value}))}
+                          className="w-full px-3 py-2 rounded-[10px] bg-white/[.06] border border-white/[.1] text-white/70 text-sm focus:outline-none focus:border-[#C9832E]"/>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-white/30 mb-1">Bitiş Tarihi</label>
+                        <input type="date" value={contractData.endDate} onChange={e=>setContractData(p=>({...p,endDate:e.target.value}))}
+                          className="w-full px-3 py-2 rounded-[10px] bg-white/[.06] border border-white/[.1] text-white/70 text-sm focus:outline-none focus:border-[#C9832E]"/>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] text-white/30 mb-1">Aylık Ücret (₺)</label>
+                        <input value={contractData.monthlyFee} onChange={e=>setContractData(p=>({...p,monthlyFee:e.target.value}))}
+                          className="w-full px-3 py-2 rounded-[10px] bg-white/[.06] border border-white/[.1] text-white/70 text-sm focus:outline-none focus:border-[#C9832E]"/>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-white/30 mb-1">Yıllık Ücret (₺)</label>
+                        <input value={contractData.yearlyFee} onChange={e=>setContractData(p=>({...p,yearlyFee:e.target.value}))}
+                          className="w-full px-3 py-2 rounded-[10px] bg-white/[.06] border border-white/[.1] text-white/70 text-sm focus:outline-none focus:border-[#C9832E]"/>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-white/30 mb-1">Plan Türü</label>
+                      <select value={contractData.planType} onChange={e=>setContractData(p=>({...p,planType:e.target.value}))}
+                        className="w-full px-3 py-2 rounded-[10px] bg-white/[.06] border border-white/[.1] text-white/70 text-sm focus:outline-none focus:border-[#C9832E]">
+                        <option value="monthly">Aylık</option>
+                        <option value="yearly">Yıllık</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-white/30 mb-1">Sözleşme Notları</label>
+                      <textarea value={contractData.notes} onChange={e=>setContractData(p=>({...p,notes:e.target.value}))}
+                        placeholder="Özel şartlar…" rows={3}
+                        className="w-full px-3 py-2 rounded-[10px] bg-white/[.06] border border-white/[.1] text-white/70 text-sm focus:outline-none focus:border-[#C9832E] resize-none"/>
+                    </div>
+                    <button onClick={()=>sendContract(selected)}
+                      className="w-full py-2 rounded-[10px] bg-yellow-500/20 text-yellow-400 text-sm font-medium hover:bg-yellow-500/30 transition-colors">
+                      📧 Sözleşmeyi Gönder
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Aksiyon butonları */}
+            <div className="flex gap-2 flex-wrap">
+              {selected.status==='pending' && (
+                <button onClick={()=>updateStatus(selected.id,'reviewing',{adminNotes:adminNote})}
+                  className="flex-1 py-2 rounded-[10px] bg-blue-500/15 text-blue-400 text-sm hover:bg-blue-500/25 transition-colors">
+                  🔍 İncelemeye Al
+                </button>
+              )}
+              {selected.status==='contract_sent' && (
+                <button onClick={()=>approveVet(selected)} disabled={!!processing}
+                  className="flex-1 py-2 rounded-[10px] bg-green-500/15 text-green-400 text-sm font-semibold hover:bg-green-500/25 transition-colors disabled:opacity-50">
+                  ✓ Onayla & Yayına Al
+                </button>
+              )}
+              {!['approved','rejected'].includes(selected.status) && (
+                <button onClick={()=>rejectApp(selected)} disabled={!!processing}
+                  className="flex-1 py-2 rounded-[10px] bg-red-500/15 text-red-400 text-sm hover:bg-red-500/25 transition-colors disabled:opacity-50">
+                  ✗ Reddet
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Filtreler */}
+      <div className="flex gap-2 mb-5 flex-wrap">
+        {FILTERS.map(f=>(
+          <button key={f.val} onClick={()=>setFilter(f.val)}
+            className={`text-sm px-3 py-[6px] rounded-full transition-all ${filter===f.val?'bg-[#C9832E] text-white':'bg-white/[.06] text-white/60 hover:bg-white/[.1]'}`}>
+            {f.label} <span className="opacity-50 text-[10px]">({apps.filter(a=>f.val==='all'?true:a.status===f.val).length})</span>
+          </button>
+        ))}
+        <button onClick={load} className="ml-auto text-xs px-3 py-2 rounded-full bg-white/[.06] text-white/40 hover:bg-white/[.1]">↻</button>
+      </div>
+
+      {loading ? <div className="flex justify-center py-10"><div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div>
+      : filtered.length===0 ? <div className="text-center py-16 text-white/40"><div className="text-4xl mb-3">🩺</div><p>Bu kategoride başvuru yok.</p></div>
+      : (
+        <div className="space-y-3">
+          {filtered.map(a=>(
+            <div key={a.id} className="bg-[#1a1a2e] rounded-[16px] border border-white/[.06] p-4 cursor-pointer hover:border-white/[.12] transition-all"
+              onClick={()=>{setSelected(a);setAdminNote(a.adminNotes||'');setShowContract(false);}}>
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="font-semibold text-white">{a.title} {a.name}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-[2px] rounded-full ${STATUS_COLOR[a.status]}`}>{STATUS_LABEL[a.status]}</span>
+                    <span className="text-[10px] bg-white/[.06] text-white/40 px-2 py-[2px] rounded-full">{a.planType==='yearly'?'Yıllık':'Aylık'}</span>
+                  </div>
+                  <div className="text-xs text-white/40 mb-1">{a.clinicName} · {a.city}{a.district?`, ${a.district}`:''}</div>
+                  <div className="text-xs text-white/40">{a.email} · {a.phone}</div>
+                  {a.meetingDate && <div className="text-xs text-purple-400 mt-1">📅 Görüşme: {new Date(a.meetingDate).toLocaleString('tr-TR')}</div>}
+                </div>
+                <div className="text-white/30 text-sm">→</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
