@@ -807,6 +807,20 @@ function VetApplicationsView() {
     await updateStatus(app.id,'rejected',{rejectionReason:reason});
   }
 
+  async function deleteVetProfile(app: any) {
+    if (!confirm(`${app.title} ${app.name} profili silinecek. Emin misiniz?`)) return;
+    try {
+      // vets koleksiyonundan sil
+      const { getDocs, query: fsQuery, where: fsWhere, deleteDoc } = await import('firebase/firestore');
+      const snap = await getDocs(fsQuery(collection(db,'vets'), fsWhere('userId','==',app.userId)));
+      for (const d of snap.docs) { await deleteDoc(d.ref); }
+      // Kullanıcı rolünü user yap
+      await updateDoc(doc(db,'users',app.userId), { role: 'user', vetSlug: '' });
+      await updateStatus(app.id,'rejected',{rejectionReason:'Profil admin tarafından silindi.'});
+      alert('Veteriner profili silindi.');
+    } catch(e:any) { alert('Hata: '+e.message); }
+  }
+
   const filtered = apps.filter(a => filter==='all' ? true : a.status===filter);
 
   const STATUS_LABEL: Record<string,string> = {
@@ -990,6 +1004,12 @@ function VetApplicationsView() {
                 <button onClick={()=>rejectApp(selected)} disabled={!!processing}
                   className="flex-1 py-2 rounded-[10px] bg-red-500/15 text-red-400 text-sm hover:bg-red-500/25 transition-colors disabled:opacity-50">
                   ✗ Reddet
+                </button>
+              )}
+              {selected.status==='approved' && (
+                <button onClick={()=>deleteVetProfile(selected)}
+                  className="flex-1 py-2 rounded-[10px] bg-red-500/15 text-red-400 text-sm hover:bg-red-500/25 transition-colors">
+                  🗑 Profili Sil
                 </button>
               )}
             </div>
