@@ -26,7 +26,7 @@ export default function GizlilikPage() {
               {title:'Veri Saklama Süresi', content:'Hesap bilgileriniz aktif üyelik süresince saklanır. Hesap silme talebinde verileriniz yasal saklama süreleri dikkate alınarak silinir.'},
               {title:'Çocukların Gizliliği', content:'Platform 13 yaş altı bireylere yönelik değildir. 13 yaş altı kullanıcılara ait veri tespit edilmesi halinde ilgili veriler derhal silinir.'},
               {title:'Politika Değişiklikleri', content:'Bu politika zaman zaman güncellenebilir. Önemli değişiklikler e-posta ile bildirilir. Güncel politika her zaman bu sayfada yayınlanır.'},
-              {title:'İletişim', content:'Gizlilik politikamıza ilişkin sorularınız için patipetraa1@gmail.com adresine ulaşabilirsiniz.'},
+              {title:'İletişim', content:'Gizlilik politikamıza ilişkin sorularınız için info@patipetra.com adresine ulaşabilirsiniz.'},
             ].map(s=>(
               <div key={s.title}>
                 <h2 className="font-serif text-lg font-semibold text-[#2F2622] mb-2">{s.title}</h2>

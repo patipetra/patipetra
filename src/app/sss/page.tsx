@@ -60,7 +60,7 @@ export default function SSSPage() {
           <div className="mt-8 bg-[#5C4A32] rounded-[20px] p-6 text-center">
             <h3 className="font-serif text-lg font-semibold text-white mb-2">Cevabını bulamadın mı?</h3>
             <p className="text-sm text-white/60 mb-4">Bize doğrudan ulaşın, en kısa sürede yanıt verelim.</p>
-            <a href="mailto:patipetraa1@gmail.com" className="inline-flex bg-[#C9832E] text-white text-sm font-semibold px-5 py-2 rounded-full hover:bg-[#b87523] transition-colors">
+            <a href="mailto:info@patipetra.com" className="inline-flex bg-[#C9832E] text-white text-sm font-semibold px-5 py-2 rounded-full hover:bg-[#b87523] transition-colors">
               E-posta Gönder
             </a>
           </div>

@@ -389,7 +389,7 @@ function VetProfile({ user }: { user: User|null }) {
           <div className="font-semibold mb-1">{user?.displayName || user?.email}</div>
           <div className="text-[#7A7368]">{user?.email}</div>
         </div>
-        <a href="mailto:patipetraa1@gmail.com" className="mt-4 inline-flex bg-[#C9832E] text-white text-sm font-medium px-5 py-2 rounded-full hover:bg-[#b87523] transition-colors">
+        <a href="mailto:info@patipetra.com" className="mt-4 inline-flex bg-[#C9832E] text-white text-sm font-medium px-5 py-2 rounded-full hover:bg-[#b87523] transition-colors">
           Admin ile İletişim →
         </a>
       </div>
