@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { onAuthChange, logout } from '@/lib/auth';
 import Logo from './Logo';
-import LangSwitcher from '@/components/ui/LangSwitcher';
+
 import type { User } from 'firebase/auth';
 
 const LINKS = [
@@ -51,7 +51,7 @@ export default function Navbar() {
 
           {/* Sağ butonlar */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <LangSwitcher/>
+            
 
             {user ? (
               <>
