@@ -7,6 +7,7 @@ import Logo from './Logo';
 import type { User } from 'firebase/auth';
 
 const LINKS = [
+  { label:'Topluluklar', href:'/topluluk' },
   { label:'Keşfet',       href:'/#kesfet'      },
   { label:'İlanlar',      href:'/ilanlar'      },
   { label:'Veterinerler', href:'/veterinerler' },
