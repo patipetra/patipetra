@@ -105,6 +105,20 @@ export default function VetBasvurPage() {
         contractSentAt:null, approvedAt:null,
         createdAt:serverTimestamp(), updatedAt:serverTimestamp(),
       });
+      // Admin'e bildirim maili gönder
+      await fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'vet_application',
+          data: {
+            fullName: `${title} ${name}`,
+            clinicName, city, district, phone, email,
+            tcNo, taxNo, education, experience,
+            specs, bio, planType,
+          }
+        })
+      });
       setSuccess(true);
     } catch(err:any) { setError('Hata: '+err.message); }
     finally { setSaving(false); }

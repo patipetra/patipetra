@@ -693,7 +693,22 @@ function VetApplicationsView() {
       meetingDate: meetDate,
       adminNotes:  adminNote,
     });
+    // Mail gönder
+    await fetch('/api/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'vet_meeting',
+        data: {
+          vetEmail:    app.email,
+          vetName:     app.fullName,
+          meetingDate: meetDate,
+          adminNotes:  adminNote,
+        }
+      })
+    });
     setMeetDate('');
+    alert('Görüşme daveti gönderildi!');
   }
 
   async function sendContract(app: any) {
@@ -712,8 +727,22 @@ function VetApplicationsView() {
       signedAt:         null,
     });
     await updateStatus(app.id, 'contract_sent', {contractSentAt: new Date().toISOString()});
+    // Mail gönder
+    await fetch('/api/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'vet_contract',
+        data: {
+          vetEmail:   app.email,
+          vetName:    app.fullName,
+          clinicName: app.clinicName,
+          ...contractData,
+        }
+      })
+    });
     setShowContract(false);
-    alert('Sözleşme gönderildi!');
+    alert('Sözleşme maili gönderildi!');
   }
 
   async function approveVet(app: any) {
@@ -756,7 +785,20 @@ function VetApplicationsView() {
       });
     } catch(e) { console.error('Vet create error:', e); }
     await updateStatus(app.id,'approved',{approvedAt:new Date().toISOString()});
-    alert('Veteriner onaylandı ve profili yayına alındı!');
+    // Mail gönder
+    await fetch('/api/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'vet_approved',
+        data: {
+          vetEmail: app.email,
+          vetName:  app.fullName,
+          vetSlug:  app.slug,
+        }
+      })
+    });
+    alert('Veteriner onaylandı, mail gönderildi ve profili yayına alındı!');
   }
 
   async function rejectApp(app: any) {
