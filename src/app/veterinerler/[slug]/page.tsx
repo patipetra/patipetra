@@ -77,8 +77,7 @@ export default function VetProfilePage() {
     try {
       const snap = await getDocs(query(
         collection(db,'vetQuestions'),
-        where('vetSlug','==',slug),
-        where('isPublic','==',true)
+        where('vetSlug','==',slug)
       ));
       setQuestions(snap.docs.map(d=>({id:d.id,...d.data()})));
     } catch(e) { console.error(e); }

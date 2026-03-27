@@ -177,7 +177,7 @@ function VetQuestions({ user }: { user: User|null }) {
   async function load() {
     setLoading(true);
     try {
-      const q = query(collection(db,'vetQuestions'), where('vetId','==',user!.uid), orderBy('createdAt','desc'));
+      const q = query(collection(db,'vetQuestions'), where('vetId','==',user!.uid));
       const snap = await getDocs(q);
       setQuestions(snap.docs.map(d=>({id:d.id,...d.data()})));
     } catch(e){console.error(e);}
