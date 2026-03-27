@@ -194,7 +194,31 @@ export async function POST(req: NextRequest) {
 
     else if (type === 'question_answered') {
       if (!data.userEmail) {
-    
+        return NextResponse.json({ success: true });
+      }
+      await sendEmail(
+        data.userEmail,
+        `💬 Sorunuz Yanıtlandı — ${data.vetName}`,
+        `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
+          <div style="background:#2F2622;padding:20px;border-radius:12px;margin-bottom:20px">
+            <h1 style="color:#E8B86D;font-size:24px;margin:0">Patıpetra 🐾</h1>
+          </div>
+          <h2 style="color:#2F2622">Merhaba ${data.userName},</h2>
+          <p style="color:#5C4A32">Sorunuz <strong>${data.vetName}</strong> tarafından yanıtlandı.</p>
+          <div style="background:#F7F2EA;padding:16px;border-radius:12px;margin:16px 0">
+            <p style="color:#9A9188;font-size:12px">Sorunuz:</p>
+            <p style="color:#2F2622;font-weight:bold">${data.question}</p>
+          </div>
+          <div style="background:#fff;border:2px solid #C9832E;padding:16px;border-radius:12px;margin:16px 0">
+            <p style="color:#C9832E;font-size:12px;font-weight:bold">🩺 ${data.vetName} yanıtladı:</p>
+            <p style="color:#5C4A32">${data.answer}</p>
+          </div>
+          <a href="https://patipetra.com/veterinerler/${data.vetSlug}" style="display:inline-block;background:#C9832E;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Veteriner Profiline Git →</a>
+          <p style="color:#9A9188;font-size:12px;margin-top:20px">Patıpetra</p>
+        </div>`
+      );
+    }
+
     else if (type === 'vet_new_question') {
       await sendEmail(
         data.vetEmail,
