@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = 'https://patipetra.vercel.app';
+  const base = 'https://patipetra.com';
   const now  = new Date();
 
   const staticPages = [

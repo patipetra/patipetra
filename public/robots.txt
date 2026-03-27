@@ -3,4 +3,4 @@ Allow: /
 Disallow: /panel/
 Disallow: /admin/
 Disallow: /api/
-Sitemap: https://patipetra.vercel.app/sitemap.xml
+Sitemap: https://patipetra.com/sitemap.xml
