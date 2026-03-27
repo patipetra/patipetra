@@ -1,127 +1,116 @@
-import type { Metadata } from 'next';
+'use client';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import Link from 'next/link';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
-export const metadata: Metadata = {
-  title: 'Veterinerler — Doğrulanmış Veteriner Rehberi',
-  description: 'Türkiye genelinde doğrulanmış veteriner klinikleri. Online soru, randevu ve pet pasaport paylaşımı.',
-  alternates: { canonical: 'https://patipetra.com/veterinerler' },
-};
-
-const VETS = [
-  { id:1, name:'Dr. Ahmet Yılmaz', clinic:'PetLife Veteriner Kliniği',    city:'Ankara',   spec:'Dahiliye · Aşı Takibi',    resp:12, rating:4.9, online:true,  verified:true  },
-  { id:2, name:'Dr. Zeynep Kaya',  clinic:'Minik Dostlar Vet',            city:'İstanbul', spec:'Cerrahi · Beslenme',        resp:35, rating:4.8, online:false, verified:true  },
-  { id:3, name:'Dr. Burak Demir',  clinic:'Paws Health Center',           city:'İzmir',    spec:'Dermatoloji · Check-up',    resp:18, rating:4.7, online:true,  verified:true  },
-  { id:4, name:'Dr. Selin Aydın',  clinic:'Hayvan Sağlığı Merkezi',       city:'Bursa',    spec:'Ortopedi · Radyoloji',      resp:25, rating:4.6, online:true,  verified:true  },
-  { id:5, name:'Dr. Mert Çelik',   clinic:'Veteriner Kliniği Antalya',    city:'Antalya',  spec:'Onkoloji · Dahiliye',       resp:40, rating:4.5, online:false, verified:false },
-  { id:6, name:'Dr. Hale Kılıç',   clinic:'Pati Veteriner Muayenehanesi', city:'Gaziantep',spec:'Diş · Genel Pratik',        resp:20, rating:4.8, online:true,  verified:true  },
+const MOCK_VETS = [
+  { id:'v1', userId:'', name:'Dr. Ahmet Yılmaz', clinic:'PetLife Veteriner Kliniği',    city:'Ankara',    spec:['Dahiliye','Aşı Takibi'],    resp:12, rating:4.9, reviewCount:124, online:true,  verified:true,  slug:'dr-ahmet-yilmaz',    avatar:'', bio:'10 yıllık deneyimle kedi ve köpek sağlığı alanında uzman.' },
+  { id:'v2', userId:'', name:'Dr. Zeynep Kaya',  clinic:'Minik Dostlar Vet',            city:'İstanbul',  spec:['Cerrahi','Beslenme'],        resp:35, rating:4.8, reviewCount:98,  online:false, verified:true,  slug:'dr-zeynep-kaya',     avatar:'', bio:'Küçük hayvan cerrahisi ve beslenme danışmanlığı.' },
+  { id:'v3', userId:'', name:'Dr. Burak Demir',  clinic:'Paws Health Center',           city:'İzmir',     spec:['Dermatoloji','Check-up'],    resp:18, rating:4.7, reviewCount:76,  online:true,  verified:true,  slug:'dr-burak-demir',     avatar:'', bio:'Deri hastalıkları ve genel sağlık kontrolü uzmanı.' },
+  { id:'v4', userId:'', name:'Dr. Selin Aydın',  clinic:'Hayvan Sağlığı Merkezi',       city:'Bursa',     spec:['Ortopedi','Radyoloji'],      resp:25, rating:4.6, reviewCount:54,  online:true,  verified:true,  slug:'dr-selin-aydin',     avatar:'', bio:'Ortopedi ve radyoloji alanında 8 yıllık deneyim.' },
+  { id:'v5', userId:'', name:'Dr. Mert Çelik',   clinic:'Veteriner Kliniği Antalya',   city:'Antalya',   spec:['Onkoloji','Dahiliye'],       resp:40, rating:4.5, reviewCount:41,  online:false, verified:false, slug:'dr-mert-celik',      avatar:'', bio:'Onkoloji ve dahiliye alanında uzman veteriner.' },
+  { id:'v6', userId:'', name:'Dr. Hale Kılıç',   clinic:'Pati Veteriner Muayenehanesi',city:'Gaziantep', spec:['Diş','Genel Pratik'],        resp:20, rating:4.8, reviewCount:89,  online:true,  verified:true,  slug:'dr-hale-kilic',      avatar:'', bio:'Diş sağlığı ve genel pratisyen veterinerlik.' },
 ];
 
 export default function VeterinerlerPage() {
+  const [vets,      setVets]      = useState(MOCK_VETS);
+  const [cityFilter,setCityFilter]= useState('');
+  const [onlineOnly,setOnlineOnly]= useState(false);
+  const [search,    setSearch]    = useState('');
+
+  const filtered = vets.filter(v => {
+    if (cityFilter && v.city !== cityFilter) return false;
+    if (onlineOnly && !v.online) return false;
+    if (search && !v.name.toLowerCase().includes(search.toLowerCase()) &&
+        !v.clinic.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
   return (
     <>
-      <Navbar />
+      <Navbar/>
       <main className="min-h-screen pb-20 lg:pb-0">
-
-        {/* Hero */}
-        <section className="relative pt-[108px] pb-10 bg-[#F7F2EA]">
+        <section className="pt-[108px] pb-10 bg-[#F7F2EA]">
           <div className="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-16">
             <div className="text-[11px] font-semibold tracking-[.28em] uppercase text-[#8B7355] mb-3">Veteriner Güveni</div>
-            <h1 className="font-serif text-[clamp(32px,6vw,60px)] font-light text-[#2F2622] mb-3">
+            <h1 className="font-serif text-[clamp(32px,6vw,56px)] font-light text-[#2F2622] mb-3">
               Doğrulanmış veterinerler,<br/><em className="italic text-[#C9832E]">güvenilir</em> iletişim
             </h1>
             <p className="text-[clamp(14px,1.8vw,16px)] leading-[1.85] text-[#7A7368] max-w-[500px] mb-8 font-light">
-              Uzmanlık alanı, ortalama yanıt süresi ve çevrimiçi durumu ile Türkiye'nin en iyi veterinerleri.
+              Uzmanlık alanı, yanıt süresi ve çevrimiçi durumu ile Türkiye'nin en iyi veterinerleri.
             </p>
             <div className="flex flex-wrap gap-3">
-              <select className="px-4 py-3 rounded-[12px] border-[1.5px] border-[#E3D9C6] bg-white text-sm text-[#5C4A32] focus:outline-none focus:border-[#C9832E] cursor-pointer transition-all">
-                <option>Tüm Şehirler</option>
-                <option>Ankara</option><option>İstanbul</option><option>İzmir</option>
-                <option>Bursa</option><option>Antalya</option>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Veteriner veya klinik ara…"
+                className="px-4 py-3 rounded-[12px] border-[1.5px] border-[#E3D9C6] bg-white text-sm text-[#5C4A32] focus:outline-none focus:border-[#C9832E] transition-all min-w-[200px]"/>
+              <select value={cityFilter} onChange={e=>setCityFilter(e.target.value)}
+                className="px-4 py-3 rounded-[12px] border-[1.5px] border-[#E3D9C6] bg-white text-sm text-[#5C4A32] focus:outline-none focus:border-[#C9832E] cursor-pointer transition-all">
+                <option value="">Tüm Şehirler</option>
+                {[...new Set(MOCK_VETS.map(v=>v.city))].map(c=><option key={c} value={c}>{c}</option>)}
               </select>
-              <select className="px-4 py-3 rounded-[12px] border-[1.5px] border-[#E3D9C6] bg-white text-sm text-[#5C4A32] focus:outline-none focus:border-[#C9832E] cursor-pointer transition-all">
-                <option>Tüm Uzmanlıklar</option>
-                <option>Dahiliye</option><option>Cerrahi</option><option>Dermatoloji</option><option>Ortopedi</option>
-              </select>
-              <button className={`px-4 py-3 rounded-[12px] border-[1.5px] border-[rgba(107,124,92,.3)] bg-[rgba(107,124,92,.1)] text-[#6B7C5C] text-sm font-medium hover:bg-[rgba(107,124,92,.2)] transition-all`}>
-                🟢 Şu An Çevrimiçi
+              <button onClick={()=>setOnlineOnly(v=>!v)}
+                className={`px-4 py-3 rounded-[12px] border-[1.5px] text-sm font-medium transition-all ${onlineOnly?'border-[#6B7C5C] bg-[rgba(107,124,92,.15)] text-[#6B7C5C]':'border-[rgba(107,124,92,.3)] bg-[rgba(107,124,92,.06)] text-[#6B7C5C] hover:bg-[rgba(107,124,92,.1)]'}`}>
+                🟢 {onlineOnly?'Çevrimiçi Gösteriliyor':'Şu An Çevrimiçi'}
               </button>
             </div>
           </div>
         </section>
 
-        {/* Vet list */}
         <section className="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-16 py-10">
-          <div className="grid lg:grid-cols-[1fr_.36fr] gap-8">
-            <div>
-              <div className="flex items-center justify-between mb-5">
-                <p className="text-sm text-[#7A7368]">{VETS.length} veteriner listeleniyor</p>
-                <select className="px-3 py-2 rounded-[10px] border-[1.5px] border-[rgba(196,169,107,.25)] bg-white text-sm text-[#5C4A32] focus:outline-none cursor-pointer transition-all">
-                  <option>En Yüksek Puan</option>
-                  <option>En Hızlı Yanıt</option>
-                  <option>Çevrimiçi Önce</option>
-                </select>
-              </div>
-              <div className="flex flex-col gap-4">
-                {VETS.map(v=>(
-                  <div key={v.id} className="bg-white rounded-[20px] border border-[rgba(201,131,46,.1)] p-5 hover:shadow-[0_8px_32px_rgba(92,74,50,.1)] hover:border-[rgba(201,131,46,.25)] transition-all">
-                    <div className="flex items-start justify-between gap-4 mb-4">
-                      <div className="flex items-start gap-4">
-                        <div className="w-14 h-14 rounded-[16px] bg-gradient-to-br from-[#EDE5D3] to-[#C9A98C] flex items-center justify-center text-2xl flex-shrink-0">🩺</div>
-                        <div>
-                          <div className="font-semibold text-[#2F2622] flex items-center gap-2 flex-wrap">
-                            {v.name}
-                            {v.verified&&<span className="text-[9px] bg-[rgba(107,124,92,.1)] text-[#6B7C5C] px-2 py-[2px] rounded-full border border-[rgba(107,124,92,.25)]">Doğrulandı</span>}
-                          </div>
-                          <div className="text-sm text-[#7A7368]">{v.clinic}</div>
-                          <div className="text-[11px] tracking-[.1em] uppercase text-[#9A9188] mt-1">{v.city} · {v.spec}</div>
-                          <div className="text-sm text-[#6E5A40] mt-1">Ort. yanıt: <strong>{v.resp} dk</strong></div>
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-2 text-right flex-shrink-0">
-                        <span className="text-[10px] bg-[rgba(201,131,46,.1)] text-[#C9832E] px-2 py-1 rounded-full border border-[rgba(201,131,46,.25)]">⭐ {v.rating}</span>
-                        <span className={`text-[10px] px-2 py-1 rounded-full ${v.online?'bg-[rgba(107,124,92,.1)] text-[#6B7C5C] border border-[rgba(107,124,92,.25)]':'bg-[#EDE5D3] text-[#7A7368]'}`}>
-                          {v.online?'🟢 Çevrimiçi':'Müsait Değil'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-4 gap-2">
-                      {['Soru Sor','Profil','Randevu','Mesaj Gönder'].map((btn,i)=>(
-                        <Link key={btn} href="/giris"
-                          className={`text-[11px] font-semibold text-center py-[9px] rounded-full transition-all ${i===0?'bg-[#5C4A32] text-white hover:bg-[#2F2622]':i===3?'bg-[#C9832E] text-white hover:bg-[#b87523]':'border-[1.5px] border-[#8B7355] text-[#5C4A32] hover:bg-[#5C4A32] hover:text-white'}`}>
-                          {btn}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="flex flex-col gap-4">
-              <div className="bg-[#5C4A32] rounded-[20px] p-6 text-white">
-                <h2 className="font-serif text-xl font-semibold mb-2">Güvenli soru-cevap</h2>
-                <p className="text-sm text-white/60 leading-relaxed mb-5">Pet pasaport kaydınızı paylaşın, fotoğraf ekleyin, veterinerden doğrudan yanıt alın.</p>
-                <Link href="/giris" className="block w-full text-center bg-[#C9832E] text-white text-sm font-semibold py-3 rounded-full hover:bg-[#b87523] transition-colors">Yeni Soru Oluştur</Link>
-              </div>
-              <div className="bg-white rounded-[20px] border border-[rgba(201,131,46,.1)] p-6">
-                <h3 className="font-serif text-lg font-semibold text-[#2F2622] mb-4">Güven İşaretleri</h3>
-                {['✓ Doğrulanmış veteriner rozeti','✓ Yanıt süresi görünürlüğü','✓ Şeffaf uzmanlık alanı','✓ Kayıt paylaşım izni','✓ Hasta gizliliği'].map(t=>(
-                  <div key={t} className="bg-[#F7F2EA] rounded-[12px] px-4 py-3 text-sm font-medium text-[#5C4A32] mb-2">{t}</div>
-                ))}
-              </div>
-              <div className="bg-white rounded-[20px] border border-[rgba(201,131,46,.1)] p-6">
-                <h3 className="font-serif text-lg font-semibold text-[#2F2622] mb-3">Klinik Profili</h3>
-                <p className="text-sm text-[#7A7368] leading-relaxed mb-4">Kliniğinizi platforma ekleyin, hasta tabanınızı genişletin.</p>
-                <Link href="/kayit" className="block w-full text-center border-[1.5px] border-[#8B7355] text-[#5C4A32] text-sm font-semibold py-3 rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">Klinik Profili Oluştur</Link>
-              </div>
-            </div>
+          <div className="flex items-center justify-between mb-5">
+            <p className="text-sm text-[#7A7368]">{filtered.length} veteriner bulundu</p>
+            <Link href="/veterinerler/basvur" className="text-sm text-[#C9832E] hover:underline font-medium">Veteriner misiniz? →</Link>
           </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filtered.map(v => (
+              <Link key={v.id} href={`/veterinerler/${v.slug}`}
+                className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5 hover:shadow-lg hover:-translate-y-1 hover:border-[rgba(201,131,46,.25)] transition-all block">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#C9832E] to-[#E8B86D] flex items-center justify-center text-2xl flex-shrink-0 relative">
+                    🩺
+                    {v.online && <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-white"/>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-[2px]">
+                      <span className="font-serif text-base font-semibold text-[#2F2622]">{v.name}</span>
+                      {v.verified && <span className="text-[10px] bg-blue-50 text-blue-600 border border-blue-100 px-2 py-[1px] rounded-full font-semibold">✓ Doğrulandı</span>}
+                    </div>
+                    <div className="text-xs text-[#7A7368] mb-1">{v.clinic}</div>
+                    <div className="text-xs text-[#9A9188]">📍 {v.city}</div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {v.spec.map(s => (
+                    <span key={s} className="text-[10px] bg-[#F7F2EA] text-[#6E5A40] border border-[#E3D9C6] px-2 py-[2px] rounded-full">{s}</span>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-[#F7F2EA]">
+                  <div className="flex items-center gap-3 text-xs text-[#7A7368]">
+                    <span>⭐ {v.rating} <span className="text-[#9A9188]">({v.reviewCount})</span></span>
+                    <span>⚡ ~{v.resp} dk</span>
+                  </div>
+                  <div className={`text-[10px] font-semibold px-2 py-1 rounded-full ${v.online?'bg-green-50 text-green-600':'bg-[#F7F2EA] text-[#9A9188]'}`}>
+                    {v.online?'🟢 Çevrimiçi':'⚫ Çevrimdışı'}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {filtered.length === 0 && (
+            <div className="text-center py-16">
+              <div className="text-4xl mb-3">🔍</div>
+              <p className="text-[#7A7368]">Arama kriterlerine uygun veteriner bulunamadı.</p>
+            </div>
+          )}
         </section>
       </main>
-      <Footer />
+      <Footer/>
     </>
   );
 }
