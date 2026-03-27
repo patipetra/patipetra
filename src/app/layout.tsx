@@ -55,7 +55,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         gtag('config', 'G-LR385VKY10');
       `}}/>
     </head>
-      <body>{children}</body>
+      <body>{children}<PWAInstaller/>
+      </body>
     </html>
   );
 }
