@@ -4,22 +4,20 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { onAuthChange, logout } from '@/lib/auth';
 import { isAdmin } from '@/lib/admin';
+import { getAllListings, approveListing, rejectListing, type Listing } from '@/lib/listings';
 import {
-  getPendingListings, getAllListings, approveListing, rejectListing,
-  type Listing,
-} from '@/lib/listings';
-import {
-  collection, getDocs, query, orderBy, updateDoc, doc,
-  getCountFromServer,
+  collection, getDocs, query, orderBy, updateDoc, doc, where,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 
 const NAV = [
-  { id:'dashboard', icon:'📊', label:'Dashboard'         },
-  { id:'listings',  icon:'📢', label:'İlan Moderasyonu'  },
-  { id:'users',     icon:'👥', label:'Kullanıcılar'       },
-  { id:'settings',  icon:'⚙',  label:'Ayarlar'            },
+  { id:'dashboard',  icon:'📊', label:'Dashboard'         },
+  { id:'listings',   icon:'📢', label:'İlan Moderasyonu'  },
+  { id:'blog',       icon:'✍️', label:'Blog Başvuruları'  },
+  { id:'services',   icon:'🏪', label:'Hizmet Başvuruları'},
+  { id:'users',      icon:'👥', label:'Kullanıcılar'      },
+  { id:'settings',   icon:'⚙',  label:'Ayarlar'           },
 ];
 
 export default function AdminPage() {
@@ -34,8 +32,7 @@ export default function AdminPage() {
       if (!u) { router.push('/giris?redirect=/admin'); return; }
       const admin = await isAdmin(u.uid);
       if (!admin) { router.push('/'); return; }
-      setUser(u);
-      setLoading(false);
+      setUser(u); setLoading(false);
     });
     return () => unsub();
   }, [router]);
@@ -59,13 +56,11 @@ export default function AdminPage() {
           <div className="text-[10px] font-semibold tracking-[.2em] uppercase text-white/30 mb-1">Patıpetra</div>
           <div className="text-lg font-semibold text-white">Admin Paneli</div>
         </div>
-        <div className="px-4 py-3 border-b border-white/[.06]">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center">🔐</div>
-            <div>
-              <div className="text-sm font-medium text-white truncate max-w-[140px]">{user?.email?.split('@')[0]}</div>
-              <div className="text-[10px] text-red-400 font-semibold tracking-[.1em] uppercase">Admin</div>
-            </div>
+        <div className="px-4 py-3 border-b border-white/[.06] flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center">🔐</div>
+          <div>
+            <div className="text-sm font-medium text-white truncate max-w-[140px]">{user?.email?.split('@')[0]}</div>
+            <div className="text-[10px] text-red-400 font-semibold tracking-[.1em] uppercase">Admin</div>
           </div>
         </div>
         <nav className="flex-1 px-2 py-3">
@@ -77,11 +72,11 @@ export default function AdminPage() {
           ))}
         </nav>
         <div className="p-3 border-t border-white/[.06]">
-          <Link href="/" className="flex items-center gap-3 px-3 py-[10px] rounded-[10px] text-sm text-white/40 hover:bg-white/[.05] hover:text-white/70 transition-all mb-1">
+          <Link href="/" className="flex items-center gap-3 px-3 py-[10px] rounded-[10px] text-sm text-white/40 hover:bg-white/[.05] transition-all mb-1">
             <span>🌐</span> Siteye Git
           </Link>
           <button onClick={async () => { await logout(); router.push('/'); }}
-            className="w-full flex items-center gap-3 px-3 py-[10px] rounded-[10px] text-sm text-white/40 hover:bg-white/[.05] hover:text-white/70 transition-all">
+            className="w-full flex items-center gap-3 px-3 py-[10px] rounded-[10px] text-sm text-white/40 hover:bg-white/[.05] transition-all">
             <span>🚪</span> Çıkış Yap
           </button>
         </div>
@@ -102,10 +97,11 @@ export default function AdminPage() {
             <span className="text-xs text-white/40">Sistem aktif</span>
           </div>
         </header>
-
         <main className="flex-1 p-4 sm:p-6">
-          {active==='dashboard' && <DashboardView setActive={setActive}/>}
+          {active==='dashboard' && <DashView setActive={setActive}/>}
           {active==='listings'  && <ListingsView user={user}/>}
+          {active==='blog'      && <BlogView/>}
+          {active==='services'  && <ServicesView/>}
           {active==='users'     && <UsersView/>}
           {active==='settings'  && <SettingsView/>}
         </main>
@@ -115,33 +111,36 @@ export default function AdminPage() {
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
-function DashboardView({ setActive }: { setActive: (p:string)=>void }) {
-  const [stats,  setStats]  = useState({users:0, listings:0, pending:0, pets:0});
+function DashView({ setActive }: { setActive:(p:string)=>void }) {
+  const [stats,  setStats]  = useState({users:0,listings:0,pending:0,pets:0,blogPending:0,servicePending:0});
   const [loading,setLoading]= useState(true);
 
-  useEffect(() => {
+  useEffect(()=>{
     async function load() {
       try {
-        const [usersSnap, listingsSnap, pendingSnap, petsSnap] = await Promise.all([
-          getCountFromServer(collection(db,'users')),
-          getCountFromServer(collection(db,'listings')),
-          getCountFromServer(query(collection(db,'listings'))),
-          getCountFromServer(collection(db,'pets')),
+        const [uSnap,lSnap,pSnap,bSnap,sSnap] = await Promise.all([
+          getDocs(collection(db,'users')),
+          getDocs(collection(db,'listings')),
+          getDocs(collection(db,'pets')),
+          getDocs(query(collection(db,'blogSubmissions'),where('status','==','pending'))),
+          getDocs(query(collection(db,'services'),where('status','==','pending'))),
         ]);
-        // pending sayısını elle say
-        const allListings = await getAllListings();
-        const pending = allListings.filter(l=>l.status==='pending').length;
+        const allListings = lSnap.docs.map(d=>d.data());
         setStats({
-          users:    usersSnap.data().count,
-          listings: listingsSnap.data().count,
-          pending,
-          pets:     petsSnap.data().count,
+          users:          uSnap.size,
+          listings:       lSnap.size,
+          pending:        allListings.filter((l:any)=>l.status==='pending').length,
+          pets:           pSnap.size,
+          blogPending:    bSnap.size,
+          servicePending: sSnap.size,
         });
-      } catch(e) { console.error(e); }
-      finally { setLoading(false); }
+      } catch(e){console.error(e);}
+      finally{setLoading(false);}
     }
     load();
-  }, []);
+  },[]);
+
+  const totalPending = stats.pending + stats.blogPending + stats.servicePending;
 
   return (
     <div>
@@ -150,116 +149,111 @@ function DashboardView({ setActive }: { setActive: (p:string)=>void }) {
         <p className="text-sm text-white/40">{new Date().toLocaleString('tr-TR')}</p>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-10">
-          <div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          {[
-            {i:'👥', l:'Toplam Kullanıcı', v:stats.users,    c:'rgba(201,131,46,.15)', action:'users'   },
-            {i:'📢', l:'Toplam İlan',       v:stats.listings, c:'rgba(107,124,92,.15)', action:'listings'},
-            {i:'⏳', l:'Onay Bekleyen',     v:stats.pending,  c:'rgba(231,76,60,.15)', action:'listings'},
-            {i:'🐾', l:'Pet Profili',       v:stats.pets,     c:'rgba(201,131,46,.12)', action:'dashboard'},
-          ].map(s => (
-            <button key={s.l} onClick={() => s.action !== 'dashboard' && setActive(s.action)}
-              className="rounded-[16px] p-4 border border-white/[.06] text-left hover:border-white/[.12] transition-all" style={{background:s.c}}>
-              <div className="text-2xl mb-2">{s.i}</div>
-              <div className="text-2xl font-bold text-white">{s.v}</div>
-              <div className="text-xs text-white/50 mt-1">{s.l}</div>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {stats.pending > 0 && (
-        <div className="bg-[rgba(231,76,60,.1)] border border-red-500/20 rounded-[16px] p-4 flex items-center justify-between gap-4">
-          <div>
-            <div className="text-sm font-semibold text-red-400 mb-1">⚠️ Onay bekleyen {stats.pending} ilan var</div>
-            <div className="text-xs text-white/40">İlanları inceleyerek onaylayın veya reddedin.</div>
+      {loading ? <div className="flex justify-center py-10"><div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div> : (
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
+            {[
+              {i:'👥', l:'Kullanıcı',    v:stats.users,          c:'rgba(201,131,46,.15)', a:'users'   },
+              {i:'📢', l:'Toplam İlan',  v:stats.listings,       c:'rgba(107,124,92,.15)', a:'listings'},
+              {i:'🐾', l:'Pet Profili',  v:stats.pets,           c:'rgba(201,131,46,.12)', a:'dashboard'},
+              {i:'⏳', l:'Bekleyen İlan',v:stats.pending,        c:'rgba(231,76,60,.15)',  a:'listings'},
+              {i:'✍️', l:'Blog Başvuru', v:stats.blogPending,    c:'rgba(100,149,237,.15)',a:'blog'    },
+              {i:'🏪', l:'Hizmet Başv.', v:stats.servicePending, c:'rgba(147,112,219,.15)',a:'services'},
+            ].map(s=>(
+              <button key={s.l} onClick={()=>s.a!=='dashboard'&&setActive(s.a)}
+                className="rounded-[16px] p-4 border border-white/[.06] text-left hover:border-white/[.12] transition-all" style={{background:s.c}}>
+                <div className="text-2xl mb-2">{s.i}</div>
+                <div className="text-2xl font-bold text-white">{s.v}</div>
+                <div className="text-xs text-white/50 mt-1">{s.l}</div>
+              </button>
+            ))}
           </div>
-          <button onClick={() => setActive('listings')}
-            className="bg-[#C9832E] text-white text-xs font-semibold px-4 py-2 rounded-full hover:bg-[#b87523] transition-colors flex-shrink-0">
-            İncele →
-          </button>
-        </div>
+
+          {totalPending > 0 && (
+            <div className="bg-[rgba(231,76,60,.1)] border border-red-500/20 rounded-[16px] p-4">
+              <div className="text-sm font-semibold text-red-400 mb-3">⚠️ Toplam {totalPending} onay bekleyen içerik var</div>
+              <div className="flex flex-wrap gap-2">
+                {stats.pending>0 && <button onClick={()=>setActive('listings')} className="text-xs bg-red-500/20 text-red-300 px-3 py-1 rounded-full hover:bg-red-500/30 transition-colors">{stats.pending} İlan →</button>}
+                {stats.blogPending>0 && <button onClick={()=>setActive('blog')} className="text-xs bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full hover:bg-blue-500/30 transition-colors">{stats.blogPending} Blog →</button>}
+                {stats.servicePending>0 && <button onClick={()=>setActive('services')} className="text-xs bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full hover:bg-purple-500/30 transition-colors">{stats.servicePending} Hizmet →</button>}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
 
-// ── Listings Moderation ───────────────────────────────────────────────────────
-function ListingsView({ user }: { user: User|null }) {
-  const [listings,  setListings]  = useState<Listing[]>([]);
-  const [loading,   setLoading]   = useState(true);
-  const [filter,    setFilter]    = useState<'all'|'pending'|'active'|'rejected'>('pending');
-  const [rejectId,  setRejectId]  = useState<string|null>(null);
-  const [reason,    setReason]    = useState('');
-  const [processing,setProcessing]= useState<string|null>(null);
+// ── Blog Başvuruları ──────────────────────────────────────────────────────────
+function BlogView() {
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [loading,     setLoading]     = useState(true);
+  const [filter,      setFilter]      = useState<'pending'|'approved'|'rejected'>('pending');
+  const [selected,    setSelected]    = useState<any|null>(null);
+  const [processing,  setProcessing]  = useState<string|null>(null);
 
-  useEffect(() => { load(); }, []);
+  useEffect(()=>{ load(); },[]);
 
   async function load() {
     setLoading(true);
-    try { setListings(await getAllListings()); }
-    catch(e) { console.error(e); }
-    finally { setLoading(false); }
-  }
-
-  async function handleApprove(id: string) {
-    if (!user) return;
-    setProcessing(id);
     try {
-      await approveListing(id, user.uid);
-      setListings(prev => prev.map(l => l.id===id ? {...l, status:'active'} : l));
-    } catch(e) { console.error(e); }
-    finally { setProcessing(null); }
+      const snap = await getDocs(query(collection(db,'blogSubmissions'), orderBy('createdAt','desc')));
+      setSubmissions(snap.docs.map(d=>({id:d.id,...d.data()})));
+    } catch(e){console.error(e);}
+    finally{setLoading(false);}
   }
 
-  async function handleReject(id: string) {
-    if (!reason.trim()) { alert('Red sebebi yazın.'); return; }
+  async function handleApprove(id:string) {
     setProcessing(id);
-    try {
-      await rejectListing(id, reason);
-      setListings(prev => prev.map(l => l.id===id ? {...l, status:'rejected', rejectionReason:reason} : l));
-      setRejectId(null); setReason('');
-    } catch(e) { console.error(e); }
-    finally { setProcessing(null); }
+    await updateDoc(doc(db,'blogSubmissions',id),{status:'approved'});
+    setSubmissions(prev=>prev.map(s=>s.id===id?{...s,status:'approved'}:s));
+    setSelected(null); setProcessing(null);
   }
 
-  const filtered = listings.filter(l => filter==='all' ? true : l.status===filter);
+  async function handleReject(id:string) {
+    setProcessing(id);
+    await updateDoc(doc(db,'blogSubmissions',id),{status:'rejected'});
+    setSubmissions(prev=>prev.map(s=>s.id===id?{...s,status:'rejected'}:s));
+    setSelected(null); setProcessing(null);
+  }
+
+  const filtered = submissions.filter(s=>s.status===filter);
 
   const STATUS_COLOR: Record<string,string> = {
     pending:  'bg-[rgba(201,131,46,.15)] text-[#C9832E]',
-    active:   'bg-green-500/15 text-green-400',
+    approved: 'bg-green-500/15 text-green-400',
     rejected: 'bg-red-500/15 text-red-400',
-    closed:   'bg-white/[.06] text-white/40',
-  };
-  const STATUS_LABEL: Record<string,string> = {
-    pending:'Bekliyor', active:'Aktif', rejected:'Reddedildi', closed:'Kapalı'
-  };
-  const TYPE_LABEL: Record<string,string> = {
-    adoption:'Sahiplendirme', temp:'Geçici Yuva', lost:'Kayıp', found:'Bulundu'
   };
 
   return (
     <div>
-      {/* Red modal */}
-      {rejectId && (
-        <div className="fixed inset-0 bg-black/60 z-[800] flex items-center justify-center p-4">
-          <div className="bg-[#1a1a2e] border border-white/[.1] rounded-[20px] w-full max-w-[480px] p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">İlanı Reddet</h3>
-            <textarea value={reason} onChange={e=>setReason(e.target.value)}
-              placeholder="Red sebebini yazın… (kullanıcıya iletilecek)"
-              rows={4} className="w-full px-3 py-3 rounded-[12px] bg-white/[.06] border border-white/[.1] text-white text-sm focus:outline-none focus:border-[#C9832E] transition-all resize-none mb-4"/>
-            <div className="flex gap-2">
-              <button onClick={() => { setRejectId(null); setReason(''); }}
-                className="flex-1 py-3 rounded-[12px] border border-white/[.1] text-white/60 text-sm hover:bg-white/[.05] transition-all">İptal</button>
-              <button onClick={() => handleReject(rejectId)} disabled={!!processing}
-                className="flex-1 py-3 rounded-[12px] bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-all disabled:opacity-60">
-                {processing ? 'İşleniyor…' : 'Reddet'}
-              </button>
+      {/* Detay modal */}
+      {selected && (
+        <div className="fixed inset-0 bg-black/70 z-[800] flex items-center justify-center p-4">
+          <div className="bg-[#1a1a2e] border border-white/[.1] rounded-[20px] w-full max-w-[680px] p-6 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-1">{selected.title}</h3>
+                <div className="text-xs text-white/40">{selected.name} · {selected.email} · {selected.category}</div>
+              </div>
+              <button onClick={()=>setSelected(null)} className="w-8 h-8 rounded-full bg-white/[.06] flex items-center justify-center text-white/50 hover:bg-white/[.1] flex-shrink-0">✕</button>
             </div>
+            <div className="bg-white/[.04] rounded-[12px] p-4 mb-5 text-sm text-white/70 leading-relaxed whitespace-pre-wrap max-h-[300px] overflow-y-auto">
+              {selected.content}
+            </div>
+            {selected.status==='pending' && (
+              <div className="flex gap-3">
+                <button onClick={()=>handleReject(selected.id)} disabled={!!processing}
+                  className="flex-1 py-3 rounded-[12px] bg-red-500/15 text-red-400 text-sm font-medium hover:bg-red-500/25 transition-colors disabled:opacity-50">
+                  ✗ Reddet
+                </button>
+                <button onClick={()=>handleApprove(selected.id)} disabled={!!processing}
+                  className="flex-1 py-3 rounded-[12px] bg-green-500/15 text-green-400 text-sm font-medium hover:bg-green-500/25 transition-colors disabled:opacity-50">
+                  ✓ Onayla
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -267,36 +261,236 @@ function ListingsView({ user }: { user: User|null }) {
       {/* Filtreler */}
       <div className="flex gap-2 mb-5 flex-wrap">
         {[
-          {val:'pending', label:'Bekleyen',    count: listings.filter(l=>l.status==='pending').length  },
-          {val:'active',  label:'Aktif',        count: listings.filter(l=>l.status==='active').length   },
-          {val:'rejected',label:'Reddedilen',   count: listings.filter(l=>l.status==='rejected').length },
-          {val:'all',     label:'Tümü',          count: listings.length                                  },
-        ].map(f => (
-          <button key={f.val} onClick={() => setFilter(f.val as any)}
+          {val:'pending',  label:'Bekleyen',   count:submissions.filter(s=>s.status==='pending').length  },
+          {val:'approved', label:'Onaylanan',  count:submissions.filter(s=>s.status==='approved').length },
+          {val:'rejected', label:'Reddedilen', count:submissions.filter(s=>s.status==='rejected').length },
+        ].map(f=>(
+          <button key={f.val} onClick={()=>setFilter(f.val as any)}
             className={`text-sm px-4 py-2 rounded-full transition-all ${filter===f.val?'bg-[#C9832E] text-white':'bg-white/[.06] text-white/60 hover:bg-white/[.1]'}`}>
-            {f.label} <span className="ml-1 opacity-60">({f.count})</span>
+            {f.label} <span className="opacity-60">({f.count})</span>
           </button>
         ))}
-        <button onClick={load} className="ml-auto text-xs px-3 py-2 rounded-full bg-white/[.06] text-white/40 hover:bg-white/[.1] transition-all">
-          ↻ Yenile
-        </button>
+        <button onClick={load} className="ml-auto text-xs px-3 py-2 rounded-full bg-white/[.06] text-white/40 hover:bg-white/[.1]">↻ Yenile</button>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-10">
-          <div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-white/40">
-          <div className="text-4xl mb-3">📭</div>
-          <p>Bu kategoride ilan yok.</p>
-        </div>
-      ) : (
+      {loading ? <div className="flex justify-center py-10"><div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div>
+      : filtered.length === 0 ? <div className="text-center py-16 text-white/40"><div className="text-4xl mb-3">📭</div><p>Bu kategoride başvuru yok.</p></div>
+      : (
         <div className="flex flex-col gap-3">
-          {filtered.map(l => (
+          {filtered.map(s=>(
+            <div key={s.id} className="bg-[#1a1a2e] rounded-[16px] border border-white/[.06] p-4 cursor-pointer hover:border-white/[.12] transition-all" onClick={()=>setSelected(s)}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="font-semibold text-white text-sm">{s.title}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-[2px] rounded-full ${STATUS_COLOR[s.status]}`}>
+                      {s.status==='pending'?'Bekliyor':s.status==='approved'?'Onaylandı':'Reddedildi'}
+                    </span>
+                    <span className="text-[10px] bg-white/[.06] text-white/40 px-2 py-[2px] rounded-full">{s.category}</span>
+                  </div>
+                  <div className="text-xs text-white/40 mb-2">{s.name} · {s.email}</div>
+                  <p className="text-xs text-white/40 line-clamp-2">{s.content}</p>
+                </div>
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                  {s.status==='pending' && (
+                    <>
+                      <button onClick={e=>{e.stopPropagation();handleApprove(s.id);}} disabled={processing===s.id}
+                        className="text-xs px-3 py-[6px] rounded-lg bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-colors">✓ Onayla</button>
+                      <button onClick={e=>{e.stopPropagation();handleReject(s.id);}} disabled={!!processing}
+                        className="text-xs px-3 py-[6px] rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors">✗ Reddet</button>
+                    </>
+                  )}
+                  <button onClick={e=>{e.stopPropagation();setSelected(s);}} className="text-xs px-3 py-[6px] rounded-lg bg-white/[.06] text-white/50 hover:bg-white/[.1] transition-colors">Oku</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Services View ─────────────────────────────────────────────────────────────
+function ServicesView() {
+  const [services,   setServices]   = useState<any[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [filter,     setFilter]     = useState<'pending'|'active'|'rejected'>('pending');
+  const [processing, setProcessing] = useState<string|null>(null);
+
+  useEffect(()=>{ load(); },[]);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const snap = await getDocs(query(collection(db,'services'), orderBy('createdAt','desc')));
+      setServices(snap.docs.map(d=>({id:d.id,...d.data()})));
+    } catch(e){console.error(e);}
+    finally{setLoading(false);}
+  }
+
+  async function handleApprove(id:string) {
+    setProcessing(id);
+    await updateDoc(doc(db,'services',id),{status:'active'});
+    setServices(prev=>prev.map(s=>s.id===id?{...s,status:'active'}:s));
+    setProcessing(null);
+  }
+
+  async function handleReject(id:string) {
+    setProcessing(id);
+    await updateDoc(doc(db,'services',id),{status:'rejected'});
+    setServices(prev=>prev.map(s=>s.id===id?{...s,status:'rejected'}:s));
+    setProcessing(null);
+  }
+
+  const filtered = services.filter(s=>s.status===filter);
+  const TYPE: Record<string,string> = {groomer:'✂️ Kuaför', hotel:'🏨 Otel', trainer:'🎓 Eğitmen', vet:'🩺 Veteriner'};
+  const STATUS_COLOR: Record<string,string> = {
+    pending:'bg-[rgba(201,131,46,.15)] text-[#C9832E]',
+    active:'bg-green-500/15 text-green-400',
+    rejected:'bg-red-500/15 text-red-400',
+  };
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-5 flex-wrap">
+        {[
+          {val:'pending',  label:'Bekleyen',  count:services.filter(s=>s.status==='pending').length },
+          {val:'active',   label:'Aktif',     count:services.filter(s=>s.status==='active').length  },
+          {val:'rejected', label:'Reddedilen',count:services.filter(s=>s.status==='rejected').length},
+        ].map(f=>(
+          <button key={f.val} onClick={()=>setFilter(f.val as any)}
+            className={`text-sm px-4 py-2 rounded-full transition-all ${filter===f.val?'bg-[#C9832E] text-white':'bg-white/[.06] text-white/60 hover:bg-white/[.1]'}`}>
+            {f.label} <span className="opacity-60">({f.count})</span>
+          </button>
+        ))}
+        <button onClick={load} className="ml-auto text-xs px-3 py-2 rounded-full bg-white/[.06] text-white/40 hover:bg-white/[.1]">↻ Yenile</button>
+      </div>
+
+      {loading ? <div className="flex justify-center py-10"><div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div>
+      : filtered.length===0 ? <div className="text-center py-16 text-white/40"><div className="text-4xl mb-3">📭</div><p>Bu kategoride başvuru yok.</p></div>
+      : (
+        <div className="flex flex-col gap-3">
+          {filtered.map(s=>(
+            <div key={s.id} className="bg-[#1a1a2e] rounded-[16px] border border-white/[.06] p-4">
+              <div className="flex items-start gap-4 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="font-semibold text-white">{s.businessName}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-[2px] rounded-full ${STATUS_COLOR[s.status]||''}`}>
+                      {s.status==='pending'?'Bekliyor':s.status==='active'?'Aktif':'Reddedildi'}
+                    </span>
+                    <span className="text-[10px] bg-white/[.06] text-white/40 px-2 py-[2px] rounded-full">{TYPE[s.type]||s.type}</span>
+                    <span className="text-[10px] bg-[rgba(201,131,46,.15)] text-[#C9832E] px-2 py-[2px] rounded-full">{s.plan==='premium'?'Premium':'Temel'}</span>
+                  </div>
+                  <div className="text-xs text-white/40 mb-1">📍 {s.city}{s.district?`, ${s.district}`:''} · 📞 {s.phone}</div>
+                  <div className="text-xs text-white/40 mb-1">👤 {s.ownerName} · {s.ownerEmail}</div>
+                  <p className="text-xs text-white/50 line-clamp-2">{s.description}</p>
+                </div>
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                  {s.status==='pending' && (
+                    <>
+                      <button onClick={()=>handleApprove(s.id)} disabled={processing===s.id}
+                        className="text-xs px-4 py-2 rounded-lg bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-colors disabled:opacity-50">✓ Onayla</button>
+                      <button onClick={()=>handleReject(s.id)} disabled={!!processing}
+                        className="text-xs px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50">✗ Reddet</button>
+                    </>
+                  )}
+                  {s.status==='active' && (
+                    <button onClick={()=>handleReject(s.id)}
+                      className="text-xs px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors">Kaldır</button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Listings View ─────────────────────────────────────────────────────────────
+function ListingsView({ user }: { user: User|null }) {
+  const [listings,  setListings]  = useState<Listing[]>([]);
+  const [loading,   setLoading]   = useState(true);
+  const [filter,    setFilter]    = useState<'pending'|'active'|'rejected'|'all'>('pending');
+  const [rejectId,  setRejectId]  = useState<string|null>(null);
+  const [reason,    setReason]    = useState('');
+  const [processing,setProcessing]= useState<string|null>(null);
+
+  useEffect(()=>{ load(); },[]);
+
+  async function load() {
+    setLoading(true);
+    try { setListings(await getAllListings()); }
+    catch(e){console.error(e);}
+    finally{setLoading(false);}
+  }
+
+  async function handleApprove(id:string) {
+    if(!user)return;
+    setProcessing(id);
+    await approveListing(id,user.uid);
+    setListings(prev=>prev.map(l=>l.id===id?{...l,status:'active'}:l));
+    setProcessing(null);
+  }
+
+  async function handleReject(id:string) {
+    if(!reason.trim()){alert('Red sebebi yazın.');return;}
+    setProcessing(id);
+    await rejectListing(id,reason);
+    setListings(prev=>prev.map(l=>l.id===id?{...l,status:'rejected',rejectionReason:reason}:l));
+    setRejectId(null); setReason(''); setProcessing(null);
+  }
+
+  const filtered = listings.filter(l=>filter==='all'?true:l.status===filter);
+  const STATUS_COLOR: Record<string,string> = {
+    pending:'bg-[rgba(201,131,46,.15)] text-[#C9832E]',
+    active:'bg-green-500/15 text-green-400',
+    rejected:'bg-red-500/15 text-red-400',
+    closed:'bg-white/[.06] text-white/40',
+  };
+  const TYPE_LABEL: Record<string,string> = {adoption:'Sahiplendirme',temp:'Geçici Yuva',lost:'Kayıp',found:'Bulundu'};
+
+  return (
+    <div>
+      {rejectId && (
+        <div className="fixed inset-0 bg-black/60 z-[800] flex items-center justify-center p-4">
+          <div className="bg-[#1a1a2e] border border-white/[.1] rounded-[20px] w-full max-w-[480px] p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">İlanı Reddet</h3>
+            <textarea value={reason} onChange={e=>setReason(e.target.value)} placeholder="Red sebebini yazın…" rows={4}
+              className="w-full px-3 py-3 rounded-[12px] bg-white/[.06] border border-white/[.1] text-white text-sm focus:outline-none focus:border-[#C9832E] transition-all resize-none mb-4"/>
+            <div className="flex gap-2">
+              <button onClick={()=>{setRejectId(null);setReason('');}} className="flex-1 py-3 rounded-[12px] border border-white/[.1] text-white/60 text-sm hover:bg-white/[.05]">İptal</button>
+              <button onClick={()=>handleReject(rejectId)} disabled={!!processing} className="flex-1 py-3 rounded-[12px] bg-red-500 text-white text-sm font-medium hover:bg-red-600 disabled:opacity-60">Reddet</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex gap-2 mb-5 flex-wrap">
+        {[
+          {val:'pending', label:'Bekleyen', count:listings.filter(l=>l.status==='pending').length},
+          {val:'active',  label:'Aktif',    count:listings.filter(l=>l.status==='active').length },
+          {val:'rejected',label:'Reddedilen',count:listings.filter(l=>l.status==='rejected').length},
+          {val:'all',     label:'Tümü',     count:listings.length},
+        ].map(f=>(
+          <button key={f.val} onClick={()=>setFilter(f.val as any)}
+            className={`text-sm px-4 py-2 rounded-full transition-all ${filter===f.val?'bg-[#C9832E] text-white':'bg-white/[.06] text-white/60 hover:bg-white/[.1]'}`}>
+            {f.label} <span className="opacity-60">({f.count})</span>
+          </button>
+        ))}
+        <button onClick={load} className="ml-auto text-xs px-3 py-2 rounded-full bg-white/[.06] text-white/40 hover:bg-white/[.1]">↻ Yenile</button>
+      </div>
+
+      {loading ? <div className="flex justify-center py-10"><div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div>
+      : filtered.length===0 ? <div className="text-center py-16 text-white/40"><div className="text-4xl mb-3">📭</div><p>Bu kategoride ilan yok.</p></div>
+      : (
+        <div className="flex flex-col gap-3">
+          {filtered.map(l=>(
             <div key={l.id} className="bg-[#1a1a2e] rounded-[16px] border border-white/[.06] p-4">
               <div className="flex items-start gap-4 flex-wrap">
-                {/* Fotoğraf */}
                 <div className="w-16 h-16 rounded-[12px] bg-white/[.06] flex-shrink-0 overflow-hidden">
                   {l.imageUrls?.[0]
                     // eslint-disable-next-line @next/next/no-img-element
@@ -304,49 +498,35 @@ function ListingsView({ user }: { user: User|null }) {
                     : <div className="w-full h-full flex items-center justify-center text-2xl">🐾</div>
                   }
                 </div>
-                {/* Bilgi */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="font-semibold text-white">{l.name}</span>
-                    <span className={`text-[10px] font-semibold px-2 py-[2px] rounded-full ${STATUS_COLOR[l.status]}`}>{STATUS_LABEL[l.status]}</span>
-                    <span className="text-[10px] bg-white/[.06] text-white/50 px-2 py-[2px] rounded-full">{TYPE_LABEL[l.type]||l.type}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-[2px] rounded-full ${STATUS_COLOR[l.status]||''}`}>
+                      {l.status==='pending'?'Bekliyor':l.status==='active'?'Aktif':l.status==='rejected'?'Reddedildi':'Kapalı'}
+                    </span>
+                    <span className="text-[10px] bg-white/[.06] text-white/40 px-2 py-[2px] rounded-full">{TYPE_LABEL[l.type]||l.type}</span>
                   </div>
-                  <div className="text-xs text-white/40 mb-1">
-                    {l.breed} · {l.city}{l.district?`, ${l.district}`:''} · {l.age}
-                  </div>
-                  <div className="text-xs text-white/40 mb-2">
-                    👤 {l.ownerName} · {l.ownerEmail}
-                  </div>
+                  <div className="text-xs text-white/40 mb-1">{l.breed} · {l.city}{l.district?`, ${l.district}`:''}</div>
+                  <div className="text-xs text-white/40 mb-1">👤 {l.ownerName} · {l.ownerEmail}</div>
                   <p className="text-xs text-white/50 line-clamp-2">{l.description}</p>
-                  {l.status==='rejected' && l.rejectionReason && (
-                    <div className="text-xs text-red-400 mt-1">Red: {l.rejectionReason}</div>
-                  )}
+                  {l.status==='rejected'&&l.rejectionReason&&<div className="text-xs text-red-400 mt-1">Red: {l.rejectionReason}</div>}
                 </div>
-                {/* Aksiyonlar */}
                 <div className="flex flex-col gap-2 flex-shrink-0">
                   {l.status==='pending' && (
                     <>
-                      <button onClick={() => handleApprove(l.id!)} disabled={processing===l.id}
-                        className="text-xs px-4 py-2 rounded-lg bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-colors disabled:opacity-50">
-                        {processing===l.id ? '…' : '✓ Onayla'}
-                      </button>
-                      <button onClick={() => { setRejectId(l.id!); setReason(''); }} disabled={!!processing}
-                        className="text-xs px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50">
-                        ✗ Reddet
-                      </button>
+                      <button onClick={()=>handleApprove(l.id!)} disabled={processing===l.id}
+                        className="text-xs px-4 py-2 rounded-lg bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-colors disabled:opacity-50">✓ Onayla</button>
+                      <button onClick={()=>{setRejectId(l.id!);setReason('');}} disabled={!!processing}
+                        className="text-xs px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50">✗ Reddet</button>
                     </>
                   )}
-                  {l.status==='active' && (
-                    <button onClick={() => { setRejectId(l.id!); setReason(''); }}
-                      className="text-xs px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors">
-                      Kaldır
-                    </button>
+                  {l.status==='active'&&(
+                    <button onClick={()=>{setRejectId(l.id!);setReason('');}}
+                      className="text-xs px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors">Kaldır</button>
                   )}
-                  {l.status==='rejected' && (
-                    <button onClick={() => handleApprove(l.id!)}
-                      className="text-xs px-4 py-2 rounded-lg bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-colors">
-                      Yeniden Onayla
-                    </button>
+                  {l.status==='rejected'&&(
+                    <button onClick={()=>handleApprove(l.id!)}
+                      className="text-xs px-4 py-2 rounded-lg bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-colors">Yeniden Onayla</button>
                   )}
                 </div>
               </div>
@@ -363,35 +543,34 @@ function UsersView() {
   const [users,   setUsers]   = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useEffect(()=>{
     async function load() {
       try {
-        const q = query(collection(db,'users'), orderBy('createdAt','desc'));
-        const snap = await getDocs(q);
-        setUsers(snap.docs.map(d => ({id:d.id,...d.data()})));
-      } catch(e) { console.error(e); }
-      finally { setLoading(false); }
+        const snap = await getDocs(query(collection(db,'users'),orderBy('createdAt','desc')));
+        setUsers(snap.docs.map(d=>({id:d.id,...d.data()})));
+      } catch(e){console.error(e);}
+      finally{setLoading(false);}
     }
     load();
-  }, []);
+  },[]);
 
-  async function toggleBan(userId: string, currentRole: string) {
-    const newRole = currentRole==='banned' ? 'user' : 'banned';
-    await updateDoc(doc(db,'users',userId), {role: newRole});
-    setUsers(prev => prev.map(u => u.id===userId ? {...u, role:newRole} : u));
+  async function toggleBan(userId:string, currentRole:string) {
+    const newRole = currentRole==='banned'?'user':'banned';
+    await updateDoc(doc(db,'users',userId),{role:newRole});
+    setUsers(prev=>prev.map(u=>u.id===userId?{...u,role:newRole}:u));
   }
 
-  async function makeAdmin(userId: string) {
-    if (!confirm('Bu kullanıcıyı admin yapmak istediğinizden emin misiniz?')) return;
-    await updateDoc(doc(db,'users',userId), {role:'admin'});
-    setUsers(prev => prev.map(u => u.id===userId ? {...u, role:'admin'} : u));
+  async function makeAdmin(userId:string) {
+    if(!confirm('Bu kullanıcıyı admin yapmak istediğinizden emin misiniz?'))return;
+    await updateDoc(doc(db,'users',userId),{role:'admin'});
+    setUsers(prev=>prev.map(u=>u.id===userId?{...u,role:'admin'}:u));
   }
 
   const ROLE_COLOR: Record<string,string> = {
-    admin:  'bg-red-500/15 text-red-400',
-    vet:    'bg-blue-500/15 text-blue-400',
-    user:   'bg-white/[.06] text-white/50',
-    banned: 'bg-red-900/30 text-red-500',
+    admin:'bg-red-500/15 text-red-400',
+    vet:'bg-blue-500/15 text-blue-400',
+    user:'bg-white/[.06] text-white/50',
+    banned:'bg-red-900/30 text-red-500',
   };
 
   return (
@@ -399,44 +578,30 @@ function UsersView() {
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-lg font-semibold text-white">Kullanıcılar ({users.length})</h2>
       </div>
-      {loading ? (
-        <div className="flex items-center justify-center py-10">
-          <div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/>
-        </div>
-      ) : (
+      {loading ? <div className="flex justify-center py-10"><div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div> : (
         <div className="bg-[#1a1a2e] rounded-[16px] border border-white/[.06] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/[.06]">
-                  {['Ad Soyad','E-posta','Rol','Plan','Kayıt Tarihi','İşlem'].map(h => (
+                  {['Ad Soyad','E-posta','Rol','Plan','Kayıt','İşlem'].map(h=>(
                     <th key={h} className="text-left px-4 py-3 text-[10px] font-semibold tracking-[.12em] uppercase text-white/30 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {users.map((u,i) => (
+                {users.map((u,i)=>(
                   <tr key={u.id} className={`border-b border-white/[.04] hover:bg-white/[.02] transition-colors ${i%2===0?'':'bg-white/[.01]'}`}>
                     <td className="px-4 py-3 text-sm text-white font-medium whitespace-nowrap">{u.name} {u.surname}</td>
                     <td className="px-4 py-3 text-sm text-white/50 whitespace-nowrap">{u.email}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${ROLE_COLOR[u.role]||ROLE_COLOR.user}`}>{u.role||'user'}</span>
-                    </td>
+                    <td className="px-4 py-3"><span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${ROLE_COLOR[u.role]||ROLE_COLOR.user}`}>{u.role||'user'}</span></td>
                     <td className="px-4 py-3 text-xs text-white/40">{u.plan||'free'}</td>
-                    <td className="px-4 py-3 text-xs text-white/30 whitespace-nowrap">
-                      {u.createdAt?.toDate?.()?.toLocaleDateString('tr-TR') || '—'}
-                    </td>
+                    <td className="px-4 py-3 text-xs text-white/30 whitespace-nowrap">{u.createdAt?.toDate?.()?.toLocaleDateString('tr-TR')||'—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
-                        {u.role !== 'admin' && (
-                          <button onClick={() => makeAdmin(u.id)}
-                            className="text-[10px] px-2 py-1 rounded bg-[rgba(201,131,46,.15)] text-[#C9832E] hover:bg-[rgba(201,131,46,.25)] transition-colors whitespace-nowrap">
-                            Admin Yap
-                          </button>
-                        )}
-                        <button onClick={() => toggleBan(u.id, u.role)}
-                          className={`text-[10px] px-2 py-1 rounded transition-colors whitespace-nowrap ${u.role==='banned'?'bg-green-500/15 text-green-400 hover:bg-green-500/25':'bg-red-500/10 text-red-400 hover:bg-red-500/20'}`}>
-                          {u.role==='banned' ? 'Banı Kaldır' : 'Banla'}
+                        {u.role!=='admin'&&<button onClick={()=>makeAdmin(u.id)} className="text-[10px] px-2 py-1 rounded bg-[rgba(201,131,46,.15)] text-[#C9832E] hover:bg-[rgba(201,131,46,.25)] transition-colors whitespace-nowrap">Admin Yap</button>}
+                        <button onClick={()=>toggleBan(u.id,u.role)} className={`text-[10px] px-2 py-1 rounded transition-colors whitespace-nowrap ${u.role==='banned'?'bg-green-500/15 text-green-400 hover:bg-green-500/25':'bg-red-500/10 text-red-400 hover:bg-red-500/20'}`}>
+                          {u.role==='banned'?'Banı Kaldır':'Banla'}
                         </button>
                       </div>
                     </td>
@@ -456,28 +621,13 @@ function SettingsView() {
   return (
     <div className="max-w-[600px]">
       <div className="bg-[#1a1a2e] rounded-[16px] border border-white/[.06] p-6 mb-4">
-        <h3 className="text-base font-semibold text-white mb-4">Site Ayarları</h3>
-        <div className="flex flex-col gap-3">
-          {[
-            {label:'Site Adı',      val:'Patıpetra'},
-            {label:'İletişim Mail', val:'patipetraa1@gmail.com'},
-            {label:'Vercel URL',    val:'patipetra.vercel.app'},
-          ].map(f => (
-            <div key={f.label}>
-              <label className="block text-[10px] font-medium tracking-[.1em] uppercase text-white/30 mb-1">{f.label}</label>
-              <div className="px-3 py-[11px] rounded-[12px] bg-white/[.04] border border-white/[.06] text-sm text-white/60">{f.val}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="bg-[#1a1a2e] rounded-[16px] border border-white/[.06] p-6">
-        <h3 className="text-base font-semibold text-white mb-3">Hızlı Linkler</h3>
+        <h3 className="text-base font-semibold text-white mb-4">Hızlı Linkler</h3>
         <div className="flex flex-col gap-2">
           {[
             {label:'Firebase Console', url:'https://console.firebase.google.com'},
             {label:'Vercel Dashboard', url:'https://vercel.com/patipetra'},
             {label:'GitHub Repo',      url:'https://github.com/patipetra/patipetra'},
-          ].map(l => (
+          ].map(l=>(
             <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer"
               className="flex items-center justify-between px-4 py-3 rounded-[12px] bg-white/[.04] border border-white/[.06] text-sm text-white/60 hover:bg-white/[.08] hover:text-white/80 transition-all">
               {l.label} <span className="text-white/30">↗</span>
