@@ -441,6 +441,12 @@ export default function VetProfilePage() {
                   className="w-full py-3 rounded-full bg-[#C9832E] text-white text-sm font-semibold hover:bg-[#b87523] transition-all">
                   📅 Randevu Al
                 </button>
+                {user && vet.userId && (
+                  <Link href={`/panel/mesajlar?to=${vet.userId}&name=${encodeURIComponent(vet.name)}`}
+                    className="w-full py-3 rounded-full border border-[#8B7355] text-[#5C4A32] text-sm font-semibold hover:bg-[#5C4A32] hover:text-white transition-all text-center block">
+                    ✉️ Mesaj Gönder
+                  </Link>
+                )}
                 <div className="border-t border-[#F7F2EA] pt-3 space-y-2">
                   {[
                     {icon:'📍', val:`${vet.city}${vet.district?`, ${vet.district}`:''}` },
