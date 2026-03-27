@@ -18,7 +18,7 @@ const COMMUNITIES = [
   {name:'Van Kedisi',        slug:'van-kedisi',        emoji:'🐈', cat:'Kedi',  members:670,  posts:1780, img:'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&q=80'},
   {name:'Tekir',             slug:'tekir',             emoji:'🐈', cat:'Kedi',  members:1120, posts:2980, img:'https://images.unsplash.com/photo-1511044568932-338cba0ad803?auto=format&fit=crop&w=600&q=80'},
   {name:'Muhabbet Kuşu',     slug:'muhabbet-kusu',     emoji:'🦜', cat:'Kuş',   members:540,  posts:1230, img:'https://images.unsplash.com/photo-1552728089-57bdde30beb3?auto=format&fit=crop&w=600&q=80'},
-  {name:'Papağan',           slug:'papagan',           emoji:'🦚', cat:'Kuş',   members:320,  posts:890,  img:'https://images.unsplash.com/photo-1534236891069-4cd570c5571e?auto=format&fit=crop&w=600&q=80'},
+  {name:'Papağan',           slug:'papagan',           emoji:'🦚', cat:'Kuş',   members:320,  posts:890,  img:'https://images.unsplash.com/photo-1552728089-57bdde30beb3?auto=format&fit=crop&w=600&q=80'},
   {name:'Tavşan',            slug:'tavsan',            emoji:'🐰', cat:'Tavşan',members:280,  posts:670,  img:'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?auto=format&fit=crop&w=600&q=80'},
   {name:'Genel Sohbet',      slug:'genel-sohbet',      emoji:'💬', cat:'Genel', members:2340, posts:6780, img:'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=600&q=80'},
 ];
