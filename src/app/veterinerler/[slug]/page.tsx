@@ -95,6 +95,7 @@ export default function VetProfilePage() {
         vetId:     vet.userId || vet.id,
         vetName:   vet.name,
         userId:    user.uid,
+        userEmail: user.email || '',
         userName:  user.displayName || user.email?.split('@')[0] || 'Kullanıcı',
         question:  qText.trim(),
         petInfo:   qPet,
