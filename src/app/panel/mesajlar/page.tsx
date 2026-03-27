@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { onAuthChange } from '@/lib/auth';
@@ -22,7 +22,7 @@ function timeAgo(date: any): string {
   return d.toLocaleDateString('tr-TR',{day:'numeric',month:'short'});
 }
 
-export default function MesajlarPage() {
+function MesajlarInner() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const [user,       setUser]       = useState<User|null>(null);
@@ -269,5 +269,13 @@ export default function MesajlarPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MesajlarPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F7F2EA] flex items-center justify-center"><div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div>}>
+      <MesajlarInner/>
+    </Suspense>
   );
 }
