@@ -103,6 +103,22 @@ export default function VetProfilePage() {
         isPublic:  true,
         createdAt: serverTimestamp(),
       });
+      // Veterinere mail gönder
+      if (vet.email) {
+        await fetch('/api/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'vet_new_question',
+            data: {
+              vetEmail: vet.email,
+              userName: user.displayName || user.email?.split('@')[0] || 'Kullanıcı',
+              question: qText.trim(),
+              petInfo:  qPet,
+            }
+          })
+        }).catch(console.error);
+      }
       setQSent(true); setQText(''); setQPet('');
     } catch(err:any) { alert('Hata: '+err.message); }
     finally { setSendingQ(false); }
@@ -129,6 +145,25 @@ export default function VetProfilePage() {
         status:          'pending',
         createdAt:       serverTimestamp(),
       });
+      // Veterinere randevu maili gönder
+      if (vet.email) {
+        await fetch('/api/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'vet_new_appointment',
+            data: {
+              vetEmail:  vet.email,
+              userName:  user.displayName || user.email?.split('@')[0] || 'Kullanıcı',
+              userPhone: apptPhone,
+              petName:   apptPet,
+              date:      apptDate,
+              time:      apptTime,
+              note:      apptNote,
+            }
+          })
+        }).catch(console.error);
+      }
       setApptSent(true);
     } catch(err:any) { alert('Hata: '+err.message); }
     finally { setSendingA(false); }

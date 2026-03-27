@@ -194,7 +194,87 @@ export async function POST(req: NextRequest) {
 
     else if (type === 'question_answered') {
       if (!data.userEmail) {
-        return NextResponse.json({ success: true });
+    
+    else if (type === 'vet_new_question') {
+      await sendEmail(
+        data.vetEmail,
+        `💬 Yeni Soru: ${data.userName}`,
+        `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
+          <div style="background:#2F2622;padding:20px;border-radius:12px;margin-bottom:20px">
+            <h1 style="color:#E8B86D;font-size:24px;margin:0">Patıpetra 🐾</h1>
+          </div>
+          <h2 style="color:#2F2622">Yeni Soru Geldi!</h2>
+          <p style="color:#5C4A32"><strong>${data.userName}</strong> size bir soru sordu:</p>
+          ${data.petInfo ? `<div style="background:#F7F2EA;padding:12px;border-radius:8px;margin:12px 0;color:#C9832E;font-size:14px">🐾 ${data.petInfo}</div>` : ''}
+          <div style="background:#F7F2EA;padding:16px;border-radius:12px;margin:16px 0;border-left:4px solid #C9832E">
+            <p style="color:#2F2622;font-size:16px;margin:0">"${data.question}"</p>
+          </div>
+          <a href="https://patipetra.com/vet-panel" style="display:inline-block;background:#C9832E;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">
+            Veteriner Panelinde Yanıtla →
+          </a>
+          <p style="color:#9A9188;font-size:12px;margin-top:20px">Patıpetra — Türkiye'nin Pet Yaşam Platformu</p>
+        </div>
+        `
+      );
+    }
+
+    else if (type === 'vet_new_appointment') {
+      await sendEmail(
+        data.vetEmail,
+        `📅 Yeni Randevu Talebi: ${data.userName}`,
+        `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
+          <div style="background:#2F2622;padding:20px;border-radius:12px;margin-bottom:20px">
+            <h1 style="color:#E8B86D;font-size:24px;margin:0">Patıpetra 🐾</h1>
+          </div>
+          <h2 style="color:#2F2622">Yeni Randevu Talebi!</h2>
+          <p style="color:#5C4A32"><strong>${data.userName}</strong> randevu talep etti.</p>
+          <div style="background:#F7F2EA;padding:20px;border-radius:12px;margin:16px 0">
+            <table style="width:100%;border-collapse:collapse">
+              ${[
+                ['Tarih',   data.date],
+                ['Saat',    data.time],
+                ['Telefon', data.userPhone],
+                ['Pet',     data.petName||'-'],
+                ['Not',     data.note||'-'],
+              ].map(([k,v])=>`<tr><td style="padding:8px;border-bottom:1px solid #E3D9C6;color:#7A7368;font-weight:bold;width:100px">${k}</td><td style="padding:8px;border-bottom:1px solid #E3D9C6;color:#2F2622">${v}</td></tr>`).join('')}
+            </table>
+          </div>
+          <a href="https://patipetra.com/vet-panel" style="display:inline-block;background:#C9832E;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">
+            Randevuyu Onayla →
+          </a>
+          <p style="color:#9A9188;font-size:12px;margin-top:20px">Patıpetra — Türkiye'nin Pet Yaşam Platformu</p>
+        </div>
+        `
+      );
+    }
+
+    else if (type === 'vet_new_message') {
+      await sendEmail(
+        data.vetEmail,
+        `💌 Yeni Mesaj: ${data.userName}`,
+        `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
+          <div style="background:#2F2622;padding:20px;border-radius:12px;margin-bottom:20px">
+            <h1 style="color:#E8B86D;font-size:24px;margin:0">Patıpetra 🐾</h1>
+          </div>
+          <h2 style="color:#2F2622">Yeni Mesaj!</h2>
+          <p style="color:#5C4A32"><strong>${data.userName}</strong> size mesaj gönderdi:</p>
+          <div style="background:#F7F2EA;padding:16px;border-radius:12px;margin:16px 0;border-left:4px solid #5C4A32">
+            <p style="color:#2F2622;margin:0">"${data.message}"</p>
+          </div>
+          <a href="https://patipetra.com/vet-panel" style="display:inline-block;background:#5C4A32;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">
+            Veteriner Panelinde Gör →
+          </a>
+          <p style="color:#9A9188;font-size:12px;margin-top:20px">Patıpetra — Türkiye'nin Pet Yaşam Platformu</p>
+        </div>
+        `
+      );
+    }
+
+
+    return NextResponse.json({ success: true });
       }
       await sendEmail(
         data.userEmail,
@@ -222,6 +302,86 @@ export async function POST(req: NextRequest) {
         `
       );
     }
+
+
+    else if (type === 'vet_new_question') {
+      await sendEmail(
+        data.vetEmail,
+        `💬 Yeni Soru: ${data.userName}`,
+        `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
+          <div style="background:#2F2622;padding:20px;border-radius:12px;margin-bottom:20px">
+            <h1 style="color:#E8B86D;font-size:24px;margin:0">Patıpetra 🐾</h1>
+          </div>
+          <h2 style="color:#2F2622">Yeni Soru Geldi!</h2>
+          <p style="color:#5C4A32"><strong>${data.userName}</strong> size bir soru sordu:</p>
+          ${data.petInfo ? `<div style="background:#F7F2EA;padding:12px;border-radius:8px;margin:12px 0;color:#C9832E;font-size:14px">🐾 ${data.petInfo}</div>` : ''}
+          <div style="background:#F7F2EA;padding:16px;border-radius:12px;margin:16px 0;border-left:4px solid #C9832E">
+            <p style="color:#2F2622;font-size:16px;margin:0">"${data.question}"</p>
+          </div>
+          <a href="https://patipetra.com/vet-panel" style="display:inline-block;background:#C9832E;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">
+            Veteriner Panelinde Yanıtla →
+          </a>
+          <p style="color:#9A9188;font-size:12px;margin-top:20px">Patıpetra — Türkiye'nin Pet Yaşam Platformu</p>
+        </div>
+        `
+      );
+    }
+
+    else if (type === 'vet_new_appointment') {
+      await sendEmail(
+        data.vetEmail,
+        `📅 Yeni Randevu Talebi: ${data.userName}`,
+        `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
+          <div style="background:#2F2622;padding:20px;border-radius:12px;margin-bottom:20px">
+            <h1 style="color:#E8B86D;font-size:24px;margin:0">Patıpetra 🐾</h1>
+          </div>
+          <h2 style="color:#2F2622">Yeni Randevu Talebi!</h2>
+          <p style="color:#5C4A32"><strong>${data.userName}</strong> randevu talep etti.</p>
+          <div style="background:#F7F2EA;padding:20px;border-radius:12px;margin:16px 0">
+            <table style="width:100%;border-collapse:collapse">
+              ${[
+                ['Tarih',   data.date],
+                ['Saat',    data.time],
+                ['Telefon', data.userPhone],
+                ['Pet',     data.petName||'-'],
+                ['Not',     data.note||'-'],
+              ].map(([k,v])=>`<tr><td style="padding:8px;border-bottom:1px solid #E3D9C6;color:#7A7368;font-weight:bold;width:100px">${k}</td><td style="padding:8px;border-bottom:1px solid #E3D9C6;color:#2F2622">${v}</td></tr>`).join('')}
+            </table>
+          </div>
+          <a href="https://patipetra.com/vet-panel" style="display:inline-block;background:#C9832E;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">
+            Randevuyu Onayla →
+          </a>
+          <p style="color:#9A9188;font-size:12px;margin-top:20px">Patıpetra — Türkiye'nin Pet Yaşam Platformu</p>
+        </div>
+        `
+      );
+    }
+
+    else if (type === 'vet_new_message') {
+      await sendEmail(
+        data.vetEmail,
+        `💌 Yeni Mesaj: ${data.userName}`,
+        `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
+          <div style="background:#2F2622;padding:20px;border-radius:12px;margin-bottom:20px">
+            <h1 style="color:#E8B86D;font-size:24px;margin:0">Patıpetra 🐾</h1>
+          </div>
+          <h2 style="color:#2F2622">Yeni Mesaj!</h2>
+          <p style="color:#5C4A32"><strong>${data.userName}</strong> size mesaj gönderdi:</p>
+          <div style="background:#F7F2EA;padding:16px;border-radius:12px;margin:16px 0;border-left:4px solid #5C4A32">
+            <p style="color:#2F2622;margin:0">"${data.message}"</p>
+          </div>
+          <a href="https://patipetra.com/vet-panel" style="display:inline-block;background:#5C4A32;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">
+            Veteriner Panelinde Gör →
+          </a>
+          <p style="color:#9A9188;font-size:12px;margin-top:20px">Patıpetra — Türkiye'nin Pet Yaşam Platformu</p>
+        </div>
+        `
+      );
+    }
+
 
     return NextResponse.json({ success: true });
   } catch(err: any) {
