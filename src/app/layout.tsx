@@ -47,7 +47,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           description:"Türkiye'nin pet yaşam platformu",
           potentialAction:{'@type':'SearchAction',target:'https://patipetra.com/ilanlar?q={search_term_string}','query-input':'required name=search_term_string'},
         })}} />
-      </head>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-LR385VKY10"></script>
+      <script dangerouslySetInnerHTML={{__html: `
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-LR385VKY10');
+      `}}/>
+    </head>
       <body>{children}</body>
     </html>
   );
