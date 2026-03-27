@@ -1,0 +1,12 @@
+{
+  "name": "Patıpetra",
+  "short_name": "Patıpetra",
+  "description": "Türkiye'nin Pet Yaşam Platformu",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F2EA",
+  "theme_color": "#2F2622",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "any", "type": "image/x-icon" }
+  ]
+}
