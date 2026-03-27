@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { onAuthChange, logout } from '@/lib/auth';
 import Logo from './Logo';
+import LangSwitcher from '@/components/ui/LangSwitcher';
 import type { User } from 'firebase/auth';
 
 const LINKS = [
@@ -55,6 +56,7 @@ export default function Navbar() {
             ) : (
               <>
                 <Link href="/giris" className={`hidden sm:inline-flex text-[13px] font-medium border border-[#8B7355] text-[#5C4A32] px-4 py-2 rounded-full hover:bg-[#5C4A32] hover:text-white transition-all ${scrolled?'':'opacity-0 pointer-events-none'}`}>Giriş Yap</Link>
+                <LangSwitcher/>
                 <Link href="/kayit" className="inline-flex text-[13px] font-semibold bg-[#C9832E] text-white px-4 py-2 rounded-full hover:bg-[#b87523] transition-colors">Üye Ol</Link>
               </>
             )}

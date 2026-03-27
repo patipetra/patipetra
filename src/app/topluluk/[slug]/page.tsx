@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { onAuthChange } from '@/lib/auth';
+import { filterContent, sanitizeInput, checkRateLimit } from '@/lib/filter';
 import {
   getCommunityBySlug, seedDefaultCommunities,
   subscribeToPostsByCommunity, createPost, deletePost,
@@ -257,6 +258,20 @@ export default function CommunityFeedPage() {
   async function handlePost(e: React.FormEvent) {
     e.preventDefault();
     if (!user || !content.trim()) return;
+
+    // Rate limit kontrolü
+    if (!checkRateLimit(user.uid, 'post', 3)) {
+      alert('Çok hızlı gönderi yapıyorsunuz. Lütfen bekleyin.');
+      return;
+    }
+
+    // Küfür filtresi
+    const { isClean, reason } = filterContent(content);
+    if (!isClean) {
+      alert(reason || 'Uygunsuz içerik.');
+      return;
+    }
+
     setPosting(true);
     try {
       const tempId = `post_${Date.now()}`;

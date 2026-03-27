@@ -21,7 +21,14 @@ export const metadata: Metadata = {
   },
   twitter:{card:'summary_large_image',title:"Patıpetra",description:"Pet platformu",images:['/og-image.jpg']},
   robots:{index:true,follow:true,googleBot:{index:true,follow:true,'max-image-preview':'large','max-snippet':-1}},
-  icons:{ icon:'/favicon.ico', apple:'/apple-touch-icon.png' },
+  icons:{
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico' },
+    ],
+    apple: '/apple-touch-icon.svg',
+    shortcut: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
