@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
-import { BLOG_POSTS } from '../page';
+import { BLOG_POSTS } from '@/data/blogPosts';
 
 // Tüm makale içerikleri
 const CONTENTS: Record<string, string> = {

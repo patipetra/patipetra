@@ -1,10 +1,11 @@
 'use client';
+import { BLOG_POSTS } from '@/data/blogPosts';
 import { useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
-export const BLOG_POSTS = [
+// moved to src/data/blogPosts.ts
   { slug:'kedi-asi-takvimi-kapsamli-rehber',  title:'Kedi Aşı Takvimi: Yaşa Göre Eksiksiz Rehber',          excerpt:'Kedinizin hangi aşıları, ne zaman ve kaç kez yaptırması gerektiğini anlatan kapsamlı rehber.',          cat:'Sağlık',       readTime:8,  date:'20 Mart 2026', img:'https://images.unsplash.com/photo-1573865526739-10659fec78a5?auto=format&fit=crop&w=800&q=80', featured:true  },
   { slug:'kopek-beslenmesi-yasagore-rehber',  title:'Köpek Beslenmesi: Yaşa ve Irka Göre Doğru Diyet',       excerpt:'Yavru köpekten kıdemli köpeğe, küçük ırklardan büyük ırklara kadar ideal beslenme düzeni.',           cat:'Beslenme',     readTime:10, date:'18 Mart 2026', img:'https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=800&q=80', featured:false },
   { slug:'ilk-kez-kedi-sahiplenmek',          title:'İlk Kez Kedi Sahipleniyorum: Nereden Başlamalıyım?',   excerpt:'Malzeme listesinden veteriner seçimine, beslenme düzeninden aşı takvimine kadar her şey.',              cat:'Sahiplendirme', readTime:12, date:'15 Mart 2026', img:'https://images.unsplash.com/photo-1511044568932-338cba0ad803?auto=format&fit=crop&w=800&q=80', featured:false },
