@@ -11,6 +11,7 @@ const LINKS = [
   { label:'Keşfet',       href:'/#kesfet'      },
   { label:'İlanlar',      href:'/ilanlar'      },
   { label:'Veterinerler', href:'/veterinerler' },
+  { label:'Hizmetler', href:'/hizmetler' },
   { label:'Pet Pasaport', href:'/panel/petlerim'},
   { label:'Mağaza',       href:'/magaza'       },
   { label:'Blog',         href:'/blog'         },
