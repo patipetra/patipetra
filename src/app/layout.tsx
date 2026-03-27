@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import PWAInstaller from '@/components/PWAInstaller';
 import './globals.css';
 
 export const viewport: Viewport = {
