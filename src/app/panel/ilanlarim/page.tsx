@@ -46,7 +46,7 @@ const EMPTY: Omit<Listing, 'id'|'status'|'viewCount'|'favoriteCount'|'createdAt'
   breed: '', color: '', city: '', district: '', description: '',
   imageUrls: [], isVaccinated: false, isSterilized: false,
   isMicrochipped: false, isKidFriendly: false, isPuppy: false,
-  puppyCount: undefined, isUrgent: false,
+  puppyCount: 0, isUrgent: false,
   contactPhone: '', contactEmail: '',
 };
 
@@ -144,6 +144,7 @@ export default function IlanlarimPage() {
         ownerName:    user.displayName || user.email?.split('@')[0] || '',
         ownerEmail:   user.email || '',
         contactEmail: form.contactEmail || user.email || '',
+        puppyCount:   form.puppyCount || 0,
       };
 
       if (editId) {
