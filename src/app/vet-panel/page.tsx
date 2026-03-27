@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { onAuthChange, logout } from '@/lib/auth';
 import {
   collection, getDocs, query, where,
-  orderBy, updateDoc, doc, serverTimestamp,
+  orderBy, updateDoc, doc, serverTimestamp, addDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
@@ -188,11 +188,45 @@ function VetQuestions({ user }: { user: User|null }) {
     if (!answerText.trim()) return;
     setSaving(true);
     try {
+      const question = questions.find(q => q.id === qId);
       await updateDoc(doc(db,'vetQuestions',qId), {
         answer:     answerText.trim(),
         answeredAt: serverTimestamp(),
       });
       setQuestions(prev => prev.map(q => q.id===qId ? {...q,answer:answerText.trim()} : q));
+
+      // Firestore bildirimi oluştur
+      if (question?.userId) {
+        await addDoc(collection(db,'notifications'), {
+          userId:    question.userId,
+          type:      'vet_answer',
+          title:     'Sorunuz Yanıtlandı!',
+          message:   `${user?.displayName || 'Veteriner'} sorunuzu yanıtladı.`,
+          vetSlug:   question.vetSlug,
+          isRead:    false,
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      // Mail gönder
+      if (question?.userId) {
+        await fetch('/api/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'question_answered',
+            data: {
+              userEmail:  question.userEmail || '',
+              userName:   question.userName,
+              vetName:    user?.displayName || 'Veteriner',
+              question:   question.question,
+              answer:     answerText.trim(),
+              vetSlug:    question.vetSlug,
+            }
+          })
+        }).catch(console.error);
+      }
+
       setAnswering(null); setAnswerText('');
     } catch(e:any){alert('Hata: '+e.message);}
     finally{setSaving(false);}
