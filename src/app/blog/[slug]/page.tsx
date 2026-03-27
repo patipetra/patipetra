@@ -569,7 +569,7 @@ export default function BlogPostPage({ params }: Props) {
                 <span className="inline-block text-[10px] font-semibold tracking-[.1em] uppercase text-[#C9832E] bg-[rgba(201,131,46,.1)] px-3 py-1 rounded-full mb-3">{post.cat}</span>
                 <h1 className="font-serif text-[clamp(26px,4vw,42px)] font-semibold text-[#2F2622] mb-4 leading-tight">{post.title}</h1>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-[#9A9188]">
-                  <span>✍️ {post.author}</span>
+                  <span>✍️ Patıpetra Editörü</span>
                   <span>📅 {post.date}</span>
                   <span>⏱ {post.readTime} dakika okuma</span>
                 </div>
