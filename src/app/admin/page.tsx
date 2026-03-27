@@ -697,7 +697,7 @@ function VetApplicationsView() {
   }
 
   async function sendContract(app: any) {
-    if (!user) return;
+
     // Sözleşme Firestore'a kaydet
     await addDoc(collection(db,'vetContracts'), {
       vetApplicationId: app.id,
@@ -708,7 +708,7 @@ function VetApplicationsView() {
       ...contractData,
       status:           'sent',
       sentAt:           serverTimestamp(),
-      sentBy:           user?.uid,
+      sentBy:           "admin",
       signedAt:         null,
     });
     await updateStatus(app.id, 'contract_sent', {contractSentAt: new Date().toISOString()});
