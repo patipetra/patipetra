@@ -137,8 +137,11 @@ export default function PremiumPage() {
         setMyCode(code);
       }
       setStep('code');
-    } catch(e) { console.error(e); }
-    finally { setCodeLoading(false); }
+    } catch(e) {
+      console.error(e);
+    } finally {
+      setCodeLoading(false);
+    }
   }
 
   function copyCode() {
