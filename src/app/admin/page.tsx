@@ -151,7 +151,7 @@ export default function AdminPage() {
   );
 }
 
-// ── Kontrol Paneli ─────────────────────────────────────────────────────────────────
+// ── Dashboard ─────────────────────────────────────────────────────────────────
 function DashView({setActive}:{setActive:(s:string)=>void}) {
   const [stats,setStats]=useState({users:0,listings:0,pending:0,vets:0,services:0,blogPending:0,vetApps:0});
   useEffect(()=>{

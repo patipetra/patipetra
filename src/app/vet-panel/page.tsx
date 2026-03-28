@@ -94,7 +94,7 @@ export default function VetPanelPage() {
         </header>
 
         <main className="p-4 sm:p-6">
-          {active==='dashboard'    && <VetKontrol Paneli user={user} setActive={setActive}/>}
+          {active==='dashboard'    && <VetDashboard user={user} setActive={setActive}/>}
           {active==='questions'    && <VetQuestions user={user}/>}
           {active==='appointments' && <VetAppointments user={user}/>}
           {active==='profile'      && <VetProfile user={user}/>}
@@ -104,8 +104,8 @@ export default function VetPanelPage() {
   );
 }
 
-// ── Kontrol Paneli ─────────────────────────────────────────────────────────────────
-function VetKontrol Paneli({ user, setActive }: { user: User|null; setActive:(s:string)=>void }) {
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function VetDashboard({ user, setActive }: { user: User|null; setActive:(s:string)=>void }) {
   const [stats, setStats] = useState({questions:0, unanswered:0, appointments:0, pending:0});
 
   useEffect(() => {
