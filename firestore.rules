@@ -1,0 +1,182 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Yardımcı fonksiyonlar ────────────────────────────────────────────────
+    function isAuth() { return request.auth != null; }
+    function isOwner(uid) { return isAuth() && request.auth.uid == uid; }
+    function isAdmin() {
+      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ─── Kullanıcılar ─────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read:   if isAuth();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─── İlanlar ──────────────────────────────────────────────────────────────
+    match /listings/{doc} {
+      allow read:   if true;
+      allow create: if isAuth();
+      allow update: if isAuth() && (
+        resource.data.ownerId == request.auth.uid || isAdmin()
+      );
+      allow delete: if isAuth() && (
+        resource.data.ownerId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // ─── Petler ───────────────────────────────────────────────────────────────
+    match /pets/{doc} {
+      allow read:   if isAuth() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isAuth();
+      allow update: if isAuth() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow delete: if isAuth() && (resource.data.ownerId == request.auth.uid || isAdmin());
+    }
+
+    // ─── Veterinerler ─────────────────────────────────────────────────────────
+    match /vets/{doc} {
+      allow read:   if true;
+      allow write:  if isAdmin();
+    }
+
+    match /vetApplications/{doc} {
+      allow read:   if isAdmin() || (isAuth() && resource.data.userId == request.auth.uid);
+      allow create: if isAuth();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /vetQuestions/{doc} {
+      allow read:   if true;
+      allow create: if isAuth();
+      allow update: if isAuth() && (resource.data.vetId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // ─── Hizmetler ────────────────────────────────────────────────────────────
+    match /services/{doc} {
+      allow read:   if true;
+      allow create: if isAuth();
+      allow update: if isAuth() && (
+        resource.data.ownerId == request.auth.uid ||
+        resource.data.userId  == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // ─── Randevular ───────────────────────────────────────────────────────────
+    match /appointments/{doc} {
+      allow read:   if isAuth() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.vetId  == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isAuth();
+      allow update: if isAuth() && (
+        resource.data.vetId      == request.auth.uid ||
+        resource.data.serviceOwnerId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // ─── Yorumlar ─────────────────────────────────────────────────────────────
+    match /reviews/{doc} {
+      allow read:   if true;
+      allow create: if isAuth();
+      allow update: if isAuth() && resource.data.userId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // ─── Favoriler ────────────────────────────────────────────────────────────
+    match /favorites/{doc} {
+      allow read:   if isAuth() && resource.data.userId == request.auth.uid;
+      allow create: if isAuth();
+      allow delete: if isAuth() && resource.data.userId == request.auth.uid;
+    }
+
+    // ─── Konuşmalar ───────────────────────────────────────────────────────────
+    match /conversations/{convId} {
+      allow read:   if isAuth() && request.auth.uid in resource.data.participants;
+      allow create: if isAuth() && request.auth.uid in request.resource.data.participants;
+      allow update: if isAuth() && request.auth.uid in resource.data.participants;
+
+      match /messages/{msgId} {
+        allow read:   if isAuth() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+        allow create: if isAuth() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+      }
+    }
+
+    // ─── Bildirimler ──────────────────────────────────────────────────────────
+    match /notifications/{doc} {
+      allow read:   if isAuth() && resource.data.userId == request.auth.uid;
+      allow create: if isAuth() || isAdmin();
+      allow update: if isAuth() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuth() && resource.data.userId == request.auth.uid;
+    }
+
+    // ─── Topluluklar ──────────────────────────────────────────────────────────
+    match /communities/{doc} {
+      allow read:   if true;
+      allow create: if isAuth();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /posts/{doc} {
+      allow read:   if true;
+      allow create: if isAuth();
+      allow update: if isAuth() && resource.data.authorId == request.auth.uid;
+      allow delete: if isAuth() && (resource.data.authorId == request.auth.uid || isAdmin());
+    }
+
+    // ─── Blog ─────────────────────────────────────────────────────────────────
+    match /blogPosts/{doc} {
+      allow read:   if true;
+      allow write:  if isAdmin();
+    }
+
+    match /blogSubmissions/{doc} {
+      allow read:   if isAdmin();
+      allow create: if isAuth();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Premium kodları ──────────────────────────────────────────────────────
+    match /premiumCodes/{doc} {
+      allow read:   if isAdmin() || (isAuth() && doc == request.auth.uid);
+      allow create: if isAuth();
+      allow update: if isAdmin();
+    }
+
+    // ─── Site Ayarları ────────────────────────────────────────────────────────
+    match /siteSettings/{doc} {
+      allow read:   if true;
+      allow write:  if isAdmin();
+    }
+
+    // ─── Popup ────────────────────────────────────────────────────────────────
+    match /popups/{doc} {
+      allow read:   if true;
+      allow write:  if isAdmin();
+    }
+
+    // ─── Ürünler ─────────────────────────────────────────────────────────────
+    match /products/{doc} {
+      allow read:   if true;
+      allow write:  if isAdmin();
+    }
+
+    // ─── Planlar ─────────────────────────────────────────────────────────────
+    match /plans/{doc} {
+      allow read:   if true;
+      allow write:  if isAdmin();
+    }
+  }
+}
