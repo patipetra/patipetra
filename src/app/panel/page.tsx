@@ -43,6 +43,8 @@ export default function PanelPage() {
   const [admin,       setAdmin]       = useState(false);
   const [loading,     setLoading]     = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [unreadNotif, setUnreadNotif] = useState(0);
+  const [unreadMsg,   setUnreadMsg]   = useState(0);
 
   useEffect(() => {
     const unsub = onAuthChange(async (u) => {
