@@ -808,107 +808,192 @@ function StoreView() {
 
 // ── Premium Planlar ───────────────────────────────────────────────────────────
 function PlansView() {
-  const [plans,setPlans]=useState<any[]>([]);
-  const [loading,setLoading]=useState(true);
-  const [editing,setEditing]=useState<any|null>(null);
-  const [form,setForm]=useState({name:'',description:'',price:0,yearlyPrice:0,features:'',type:'user',active:true,highlighted:false});
+  const DEFAULT_PLANS = [
+    { id:'premium_monthly',  name:'Premium',         price:249,   yearlyPrice:0,    period:'aylık',  months:1,  color:'#C9832E', badge:'En Popüler',        shopierUrl:'https://www.shopier.com/patipetra/45634400',
+      features:['5 aktif ilan / ay','5 pet pasaport','Telefon & konum görme','Tüm ilanları görme','AI veteriner asistanı','Mesajlaşma','Öncelikli destek'] },
+    { id:'premium_yearly',   name:'Pro Yıllık',      price:2490,  yearlyPrice:0,    period:'yıllık', months:12, color:'#1D9E75', badge:'%17 İndirim',       shopierUrl:'https://www.shopier.com/patipetra/45634466',
+      features:["Premium'un tümü",'20 ilan/ay (günde 5)','20 pet pasaport','Topluluk kurabilir','Blog yazabilir','Özel rozet'] },
+    { id:'corporate_monthly',name:'Kurumsal Aylık',  price:599,   yearlyPrice:0,    period:'aylık',  months:1,  color:'#534AB7', badge:'Veteriner & İşletme',shopierUrl:'https://www.shopier.com/patipetra/45634552',
+      features:['Profil sayfası aktif','Doğrudan iletişim','Randevu sistemi','Soru-cevap modülü','Arama önceliği','Onaylı İşletme rozeti'] },
+    { id:'corporate_yearly', name:'Kurumsal Yıllık', price:6110,  yearlyPrice:0,    period:'yıllık', months:12, color:'#3C3489', badge:'%15 İndirim',       shopierUrl:'https://www.shopier.com/patipetra/45634618',
+      features:["Kurumsal aylığın tümü",'Aylık performans raporu','Öncelikli listeleme','Toplu ödeme avantajı','7/24 destek','Özel hesap yöneticisi'] },
+  ];
 
-  useEffect(()=>{ load(); },[]);
-  async function load(){
+  const [plans,   setPlans]   = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<any|null>(null);
+  const [saving,  setSaving]  = useState(false);
+  const [saved,   setSaved]   = useState(false);
+
+  useEffect(() => { loadPlans(); }, []);
+
+  async function loadPlans() {
     setLoading(true);
-    const snap=await getDocs(query(collection(db,'plans'),orderBy('price','asc')));
-    setPlans(snap.docs.map(d=>({id:d.id,...d.data()})));
-    setLoading(false);
+    try {
+      const snap = await getDoc(doc(db,'siteSettings','premiumPlans'));
+      if (snap.exists() && snap.data().plans?.length > 0) {
+        setPlans(snap.data().plans);
+      } else {
+        setPlans(DEFAULT_PLANS);
+      }
+    } catch { setPlans(DEFAULT_PLANS); }
+    finally { setLoading(false); }
   }
 
-  async function save(){
-    if(!form.name) return;
-    const features=form.features.split('\n').filter(Boolean);
-    const data={...form,price:Number(form.price),yearlyPrice:Number(form.yearlyPrice),features,updatedAt:serverTimestamp()};
-    if(editing?.id){
-      await updateDoc(doc(db,'plans',editing.id),data);
-    } else {
-      await addDoc(collection(db,'plans'),{...data,createdAt:serverTimestamp()});
-    }
-    setEditing(null); setForm({name:'',description:'',price:0,yearlyPrice:0,features:'',type:'user',active:true,highlighted:false}); load();
+  async function savePlans(updated: any[]) {
+    setSaving(true);
+    try {
+      await setDoc(doc(db,'siteSettings','premiumPlans'), { plans: updated, updatedAt: serverTimestamp() });
+      setPlans(updated);
+      setSaved(true);
+      setTimeout(()=>setSaved(false), 2000);
+    } catch(e:any) { alert('Hata: '+e.message); }
+    finally { setSaving(false); }
   }
 
-  async function del(id:string){
-    if(!confirm('Silinsin mi?')) return;
-    await deleteDoc(doc(db,'plans',id)); load();
+  function updatePlan(id: string, field: string, value: any) {
+    setPlans(prev => prev.map(p => p.id===id ? {...p,[field]:value} : p));
   }
 
-  const INPUT="w-full px-3 py-2 rounded-[10px] bg-white/[.06] border border-white/[.1] text-white/80 text-sm focus:outline-none focus:border-[#C9832E]";
+  function updateFeature(planId: string, idx: number, value: string) {
+    setPlans(prev => prev.map(p => {
+      if (p.id !== planId) return p;
+      const feats = [...(p.features||[])];
+      feats[idx] = value;
+      return {...p, features: feats};
+    }));
+  }
 
-  return(
+  function addFeature(planId: string) {
+    setPlans(prev => prev.map(p =>
+      p.id===planId ? {...p, features:[...(p.features||[]),'Yeni özellik']} : p
+    ));
+  }
+
+  function removeFeature(planId: string, idx: number) {
+    setPlans(prev => prev.map(p => {
+      if (p.id !== planId) return p;
+      const feats = [...(p.features||[])];
+      feats.splice(idx,1);
+      return {...p, features: feats};
+    }));
+  }
+
+  const INPUT = "w-full px-3 py-2 rounded-[10px] bg-white/[.06] border border-white/[.1] text-white text-sm focus:outline-none focus:border-[#C9832E] transition-all";
+  const LABEL = "block text-[10px] text-white/40 uppercase tracking-[.1em] mb-1";
+
+  if (loading) return <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div>;
+
+  return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-sm font-semibold text-white">Premium Planlar ({plans.length})</h3>
-        <button onClick={()=>setEditing({})} className="text-xs px-4 py-2 rounded-full bg-[#C9832E] text-white hover:bg-[#b87523]">+ Yeni Plan</button>
+        <p className="text-sm text-white/40">4 plan · Firestore'a kaydedince premium sayfasına anlık yansır</p>
+        <button onClick={()=>savePlans(plans)} disabled={saving}
+          className="px-5 py-2 rounded-full bg-[#C9832E] text-white text-sm font-semibold hover:bg-[#b87523] disabled:opacity-60">
+          {saving?'Kaydediliyor…':saved?'✓ Kaydedildi!':'Tüm Planları Kaydet'}
+        </button>
       </div>
 
-      {editing!==null && (
-        <div className="bg-[#1a1a2e] rounded-[16px] border border-white/[.06] p-5 mb-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-white">{editing?.id?'Plan Düzenle':'Yeni Plan'}</h3>
-            <button onClick={()=>setEditing(null)} className="text-white/30 hover:text-white text-xs">✕</button>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><label className="block text-[10px] uppercase tracking-[.1em] text-white/30 mb-1">Plan Adı *</label><input value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} className={INPUT}/></div>
-            <div>
-              <label className="block text-[10px] uppercase tracking-[.1em] text-white/30 mb-1">Tür</label>
-              <select value={form.type} onChange={e=>setForm(p=>({...p,type:e.target.value}))} className={INPUT}>
-                <option value="user">Bireysel</option>
-                <option value="vet">Veteriner</option>
-                <option value="business">İşletme</option>
-              </select>
+      <div className="grid sm:grid-cols-2 gap-5">
+        {plans.map(plan=>(
+          <div key={plan.id} className="bg-[#1a1a2e] rounded-[16px] border border-white/[.06] p-5">
+            {/* Plan başlık */}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-4 h-4 rounded-full flex-shrink-0" style={{background:plan.color}}/>
+              <span className="font-semibold text-white text-sm">{plan.name}</span>
+              <span className="text-[10px] text-white/30 ml-auto">{plan.id}</span>
             </div>
-            <div><label className="block text-[10px] uppercase tracking-[.1em] text-white/30 mb-1">Aylık Fiyat (₺)</label><input type="number" value={form.price} onChange={e=>setForm(p=>({...p,price:Number(e.target.value)}))} className={INPUT}/></div>
-            <div><label className="block text-[10px] uppercase tracking-[.1em] text-white/30 mb-1">Yıllık Fiyat (₺)</label><input type="number" value={form.yearlyPrice} onChange={e=>setForm(p=>({...p,yearlyPrice:Number(e.target.value)}))} className={INPUT}/></div>
-          </div>
-          <div><label className="block text-[10px] uppercase tracking-[.1em] text-white/30 mb-1">Açıklama</label><input value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))} className={INPUT}/></div>
-          <div><label className="block text-[10px] uppercase tracking-[.1em] text-white/30 mb-1">Özellikler (her satıra bir tane)</label><textarea value={form.features} onChange={e=>setForm(p=>({...p,features:e.target.value}))} rows={5} placeholder="Pet pasaport&#10;Sınırsız ilan&#10;Öncelikli destek" className={`${INPUT} resize-none`}/></div>
-          <div className="flex gap-4">
-            {[{l:'Aktif',k:'active'},{l:'Öne Çıkan',k:'highlighted'}].map(f=>(
-              <label key={f.k} className="flex items-center gap-2 cursor-pointer">
-                <div onClick={()=>setForm(p=>({...p,[f.k]:!(p as any)[f.k]}))}
-                  className={`w-8 h-5 rounded-full transition-all relative ${(form as any)[f.k]?'bg-[#C9832E]':'bg-white/[.1]'}`}>
-                  <div className={`absolute top-[3px] w-[14px] h-[14px] rounded-full bg-white transition-all ${(form as any)[f.k]?'left-[18px]':'left-[3px]'}`}/>
-                </div>
-                <span className="text-xs text-white/50">{f.l}</span>
-              </label>
-            ))}
-          </div>
-          <button onClick={save} className="w-full py-2 rounded-[10px] bg-[#C9832E] text-white text-sm font-semibold hover:bg-[#b87523]">
-            {editing?.id?'Güncelle':'Plan Ekle'}
-          </button>
-        </div>
-      )}
 
-      {loading ? <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div>
-      : plans.length===0 ? <div className="text-center py-12 text-white/40"><div className="text-4xl mb-3">💎</div><p>Henüz plan yok.</p></div>
-      : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {plans.map(p=>(
-            <div key={p.id} className={`bg-[#1a1a2e] rounded-[16px] border p-4 ${p.highlighted?'border-[#C9832E]':'border-white/[.06]'}`}>
-              {p.highlighted&&<div className="text-[10px] bg-[#C9832E] text-white px-2 py-[2px] rounded-full inline-block mb-2">Öne Çıkan</div>}
-              <div className="font-semibold text-white mb-1">{p.name}</div>
-              <div className="text-2xl font-bold text-[#C9832E] mb-1">₺{p.price}<span className="text-sm text-white/30">/ay</span></div>
-              {p.yearlyPrice>0&&<div className="text-xs text-white/40 mb-2">₺{p.yearlyPrice}/yıl</div>}
-              <div className="text-xs text-white/40 mb-3">{p.description}</div>
-              <div className="space-y-1 mb-3">
-                {(p.features||[]).slice(0,3).map((f:string,i:number)=>(
-                  <div key={i} className="text-xs text-white/50 flex items-center gap-1"><span className="text-green-400">✓</span>{f}</div>
-                ))}
+            <div className="space-y-3">
+              {/* Ad ve badge */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className={LABEL}>Plan Adı</label>
+                  <input value={plan.name} onChange={e=>updatePlan(plan.id,'name',e.target.value)} className={INPUT}/>
+                </div>
+                <div>
+                  <label className={LABEL}>Badge (etiket)</label>
+                  <input value={plan.badge||''} onChange={e=>updatePlan(plan.id,'badge',e.target.value)} className={INPUT} placeholder="En Popüler"/>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button onClick={()=>{setEditing(p);setForm({name:p.name,description:p.description||'',price:p.price,yearlyPrice:p.yearlyPrice||0,features:(p.features||[]).join('\n'),type:p.type||'user',active:p.active!==false,highlighted:p.highlighted||false});}} className="flex-1 text-xs py-1 rounded-full bg-blue-500/15 text-blue-400">Düzenle</button>
-                <button onClick={()=>del(p.id)} className="flex-1 text-xs py-1 rounded-full bg-red-500/15 text-red-400">Sil</button>
+
+              {/* Fiyat */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className={LABEL}>Fiyat (₺)</label>
+                  <input type="number" value={plan.price} onChange={e=>updatePlan(plan.id,'price',Number(e.target.value))} className={INPUT}/>
+                </div>
+                <div>
+                  <label className={LABEL}>Dönem</label>
+                  <select value={plan.period} onChange={e=>updatePlan(plan.id,'period',e.target.value)} className={INPUT}>
+                    <option value="aylık" style={{background:'#1a1a2e'}}>Aylık</option>
+                    <option value="yıllık" style={{background:'#1a1a2e'}}>Yıllık</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Renk ve Shopier */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className={LABEL}>Renk</label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={plan.color} onChange={e=>updatePlan(plan.id,'color',e.target.value)}
+                      className="w-10 h-9 rounded-[8px] border border-white/[.1] bg-transparent cursor-pointer"/>
+                    <input value={plan.color} onChange={e=>updatePlan(plan.id,'color',e.target.value)} className={`${INPUT} flex-1`}/>
+                  </div>
+                </div>
+                <div>
+                  <label className={LABEL}>Ay sayısı</label>
+                  <input type="number" value={plan.months||1} onChange={e=>updatePlan(plan.id,'months',Number(e.target.value))} className={INPUT} min={1} max={12}/>
+                </div>
+              </div>
+
+              {/* Shopier URL */}
+              <div>
+                <label className={LABEL}>Shopier Ürün URL</label>
+                <input value={plan.shopierUrl||''} onChange={e=>updatePlan(plan.id,'shopierUrl',e.target.value)} className={INPUT} placeholder="https://shopier.com/..."/>
+              </div>
+
+              {/* Özellikler */}
+              <div>
+                <label className={LABEL}>Özellikler</label>
+                <div className="space-y-2">
+                  {(plan.features||[]).map((f:string, i:number)=>(
+                    <div key={i} className="flex gap-2">
+                      <input value={f} onChange={e=>updateFeature(plan.id,i,e.target.value)}
+                        className={INPUT}/>
+                      <button onClick={()=>removeFeature(plan.id,i)}
+                        className="px-2 py-1 rounded-[8px] bg-red-500/15 text-red-400 hover:bg-red-500/25 text-sm flex-shrink-0">✕</button>
+                    </div>
+                  ))}
+                  <button onClick={()=>addFeature(plan.id)}
+                    className="w-full py-2 rounded-[10px] border border-dashed border-white/[.15] text-white/40 text-xs hover:border-[#C9832E] hover:text-[#C9832E] transition-all">
+                    + Özellik Ekle
+                  </button>
+                </div>
+              </div>
+
+              {/* Önizleme butonu */}
+              <div className="pt-2 border-t border-white/[.06]">
+                <div className="w-full py-2 rounded-full text-white text-xs font-semibold text-center" style={{background:plan.color}}>
+                  {plan.name} — ₺{Number(plan.price).toLocaleString('tr-TR')} / {plan.period}
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-5 flex justify-end">
+        <button onClick={()=>savePlans(plans)} disabled={saving}
+          className="px-8 py-3 rounded-full bg-[#C9832E] text-white font-semibold hover:bg-[#b87523] disabled:opacity-60">
+          {saving?'Kaydediliyor…':saved?'✓ Kaydedildi!':'Planları Kaydet →'}
+        </button>
+      </div>
+
+      <div className="mt-4 bg-[rgba(201,131,46,.08)] border border-[rgba(201,131,46,.15)] rounded-[14px] p-4 text-xs text-white/40">
+        💡 Kaydet'e bastığında planlar Firestore'a yazılır ve premium sayfası otomatik güncellenir. Shopier URL'lerini değiştirmeyi unutmayın.
+      </div>
     </div>
   );
 }

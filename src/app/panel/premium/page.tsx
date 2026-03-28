@@ -34,6 +34,21 @@ export default function PremiumPage() {
   const [codeLoading, setCodeLoading] = useState(false);
   const [copied,      setCopied]      = useState(false);
   const [step,        setStep]        = useState<'plans'|'code'|'active'>('plans');
+  const [dbPlans,     setDbPlans]     = useState<any[]>([]);
+
+  useEffect(() => {
+    // Firestore'dan planları çek
+    getDoc(doc(db,'siteSettings','premiumPlans')).then(snap => {
+      if (snap.exists() && snap.data().plans?.length > 0) {
+        // Admin'den güncellenen planları kullan
+        const dbPlans = snap.data().plans;
+        // PLANS state'ini güncelle - burada doğrudan kullanıyoruz
+        setDbPlans(dbPlans);
+      }
+    }).catch(console.error);
+  }, []);
+
+  const activePlans = dbPlans.length > 0 ? dbPlans : PLANS;
 
   useEffect(() => {
     const unsub = onAuthChange(async u => {
@@ -129,7 +144,7 @@ export default function PremiumPage() {
                 <p className="text-[#7A7368]">Petiniz için en iyisini seçin. Fiyatlar KDV dahildir.</p>
               </div>
               <div className="grid sm:grid-cols-2 gap-5 mb-6">
-                {PLANS.map(plan => (
+                {activePlans.map(plan => (
                   <div key={plan.id}
                     className="bg-white rounded-[24px] p-6 border-2 hover:shadow-lg transition-all cursor-pointer"
                     style={{borderColor: plan.color+'33'}}
