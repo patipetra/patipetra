@@ -18,6 +18,15 @@ const NAV = [
   { id:'ayarlar',     icon:'⚙',  label:'Ayarlar',           href:'/panel/ayarlar'      },
 ];
 
+async function getFavorites(userId: string) {
+  try {
+    const { getDocs, collection, query, where, orderBy } = await import('firebase/firestore');
+    const { db } = await import('@/lib/firebase');
+    const snap = await getDocs(query(collection(db,'favorites'), where('userId','==',userId), orderBy('createdAt','desc')));
+    return snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch { return []; }
+}
+
 export default function PanelPage() {
   const router = useRouter();
   const [user,        setUser]        = useState<User|null>(null);

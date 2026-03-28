@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { onAuthChange } from '@/lib/auth';
+import FavoriteButton from '@/components/FavoriteButton';
 import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
@@ -168,7 +169,10 @@ export default function IlanDetayPage() {
                     <span className="text-[10px] font-semibold bg-red-50 text-red-600 px-3 py-1 rounded-full animate-pulse">⚡ Acil</span>
                   )}
                 </div>
-                <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-[#2F2622] mb-2">{listing.name}</h1>
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-[#2F2622]">{listing.name}</h1>
+                  <FavoriteButton targetId={id} targetType="listing" targetName={listing.name}/>
+                </div>
                 <div className="text-sm text-[#7A7368] mb-4">📍 {listing.city}{listing.district?`, ${listing.district}`:''}</div>
 
                 {/* Açıklama */}

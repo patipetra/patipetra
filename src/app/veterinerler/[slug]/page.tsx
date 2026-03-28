@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { onAuthChange } from '@/lib/auth';
+import ReviewSystem from '@/components/ReviewSystem';
+import FavoriteButton from '@/components/FavoriteButton';
 import {
   collection, addDoc, getDocs, query,
   where, orderBy, serverTimestamp, doc, getDoc,
@@ -236,6 +238,7 @@ export default function VetProfilePage() {
               </div>
               {/* Aksiyon butonları */}
               <div className="flex flex-col gap-2 flex-shrink-0">
+                {vet && <FavoriteButton targetId={vet.id} targetType="vet" targetName={vet.name}/>}
                 <button onClick={()=>setTab('sorular')}
                   className="bg-white/10 border border-white/20 text-white text-sm font-medium px-5 py-2 rounded-full hover:bg-white/20 transition-colors">
                   💬 Soru Sor
@@ -260,6 +263,7 @@ export default function VetProfilePage() {
                   {val:'hakkinda', label:'Hakkında'},
                   {val:'sorular',  label:'Soru & Cevap'},
                   {val:'randevu',  label:'Randevu Al'},
+    {val:'yorumlar',  label:'Değerlendirmeler'},
                 ].map(t=>(
                   <button key={t.val} onClick={()=>setTab(t.val as any)}
                     className={`flex-1 py-2 rounded-[10px] text-sm font-medium transition-all ${tab===t.val?'bg-[#5C4A32] text-white':'text-[#7A7368] hover:text-[#2F2622]'}`}>
@@ -268,7 +272,16 @@ export default function VetProfilePage() {
                 ))}
               </div>
 
-              {/* Hakkında */}
+              {/* Yorumlar */}
+              {tab==='yorumlar' && vet && (
+                <ReviewSystem
+                  targetId={vet.id}
+                  targetName={vet.name}
+                  targetType="vet"
+                />
+              )}
+
+            {/* Hakkında */}
               {tab==='hakkinda' && (
                 <div className="space-y-4">
                   <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-6">
