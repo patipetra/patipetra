@@ -1459,3 +1459,103 @@ function SettingsView() {
     </div>
   );
 }
+
+// ── Topluluk Başvuruları ──────────────────────────────────────────────────────
+function CommunitiesView() {
+  const [communities, setCommunities] = useState<any[]>([]);
+  const [loading,     setLoading]     = useState(true);
+  const [filter,      setFilter]      = useState<'pending'|'active'|'rejected'>('pending');
+
+  useEffect(() => { load(); }, []);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const snap = await getDocs(query(collection(db,'communities'),
+        where('isDefault','==',false), orderBy('createdAt','desc')));
+      setCommunities(snap.docs.map(d=>({id:d.id,...d.data()})));
+    } catch(e) { console.error(e); }
+    finally { setLoading(false); }
+  }
+
+  async function approve(id: string) {
+    await updateDoc(doc(db,'communities',id), {status:'active'});
+    setCommunities(prev=>prev.map(c=>c.id===id?{...c,status:'active'}:c));
+  }
+
+  async function reject(id: string) {
+    const reason = prompt('Red sebebi:');
+    if (!reason) return;
+    await updateDoc(doc(db,'communities',id), {status:'rejected', rejectionReason:reason});
+    setCommunities(prev=>prev.map(c=>c.id===id?{...c,status:'rejected'}:c));
+  }
+
+  async function del(id: string) {
+    if (!confirm('Silinsin mi?')) return;
+    await deleteDoc(doc(db,'communities',id));
+    setCommunities(prev=>prev.filter(c=>c.id!==id));
+  }
+
+  const filtered = communities.filter(c => c.status === filter || (!c.status && filter==='pending'));
+  const STATUS_COLOR: Record<string,string> = {
+    pending:  'bg-[rgba(201,131,46,.15)] text-[#C9832E]',
+    active:   'bg-green-500/15 text-green-400',
+    rejected: 'bg-red-500/15 text-red-400',
+  };
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-5 flex-wrap">
+        {[
+          {val:'pending',  label:'Bekleyen',  count:communities.filter(c=>!c.status||c.status==='pending').length},
+          {val:'active',   label:'Onaylanan', count:communities.filter(c=>c.status==='active').length},
+          {val:'rejected', label:'Reddedilen',count:communities.filter(c=>c.status==='rejected').length},
+        ].map(f=>(
+          <button key={f.val} onClick={()=>setFilter(f.val as any)}
+            className={`text-sm px-4 py-2 rounded-full transition-all ${filter===f.val?'bg-[#C9832E] text-white':'bg-white/[.06] text-white/60 hover:bg-white/[.1]'}`}>
+            {f.label} <span className="opacity-60">({f.count})</span>
+          </button>
+        ))}
+        <button onClick={load} className="ml-auto text-xs px-3 py-2 rounded-full bg-white/[.06] text-white/40">↻</button>
+      </div>
+
+      {loading ? <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div>
+      : filtered.length===0 ? <div className="text-center py-12 text-white/40"><div className="text-4xl mb-3">🏘️</div><p>Başvuru yok.</p></div>
+      : (
+        <div className="space-y-3">
+          {filtered.map(c=>(
+            <div key={c.id} className="bg-[#1a1a2e] rounded-[14px] border border-white/[.06] p-4">
+              <div className="flex items-start gap-4 flex-wrap">
+                <div className="text-3xl flex-shrink-0">{c.emoji||'🐾'}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="font-semibold text-white">{c.name}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-[2px] rounded-full ${STATUS_COLOR[c.status||'pending']}`}>
+                      {c.status==='active'?'Onaylı':c.status==='rejected'?'Reddedildi':'Bekliyor'}
+                    </span>
+                    <span className="text-[10px] bg-white/[.06] text-white/40 px-2 py-[2px] rounded-full">{c.category}</span>
+                  </div>
+                  <div className="text-xs text-white/50 mb-1">{c.description}</div>
+                  <div className="text-xs text-white/30">👤 {c.creatorName} · {c.creatorEmail}</div>
+                  {c.rejectionReason && <div className="text-xs text-red-400 mt-1">Red: {c.rejectionReason}</div>}
+                </div>
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                  {(!c.status||c.status==='pending') && (
+                    <>
+                      <button onClick={()=>approve(c.id)} className="text-xs px-4 py-2 rounded-full bg-green-500/15 text-green-400 hover:bg-green-500/25">✓ Onayla</button>
+                      <button onClick={()=>reject(c.id)} className="text-xs px-4 py-2 rounded-full bg-red-500/15 text-red-400 hover:bg-red-500/25">✗ Reddet</button>
+                    </>
+                  )}
+                  {c.status==='active' && (
+                    <button onClick={()=>reject(c.id)} className="text-xs px-4 py-2 rounded-full bg-red-500/15 text-red-400">Kaldır</button>
+                  )}
+                  <button onClick={()=>del(c.id)} className="text-xs px-4 py-2 rounded-full bg-white/[.06] text-white/40 hover:bg-white/[.1]">Sil</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

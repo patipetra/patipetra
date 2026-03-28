@@ -82,7 +82,24 @@ export async function POST(req: NextRequest) {
 
     else if (type === 'question_answered') {
       if (!data.userEmail) {
-        return NextResponse.json({ success: true });
+        else if (type === 'community_request') {
+      await sendEmail(
+        ADMIN_EMAIL,
+        `🐾 Yeni Topluluk Başvurusu: ${data.communityName}`,
+        `<div style="font-family:sans-serif;padding:20px;max-width:600px">
+          <h2>Yeni Topluluk Başvurusu</h2>
+          <p><b>Topluluk Adı:</b> ${data.communityName}</p>
+          <p><b>Açıklama:</b> ${data.description}</p>
+          <p><b>Kategori:</b> ${data.category}</p>
+          <p><b>Kurucu:</b> ${data.creatorName} (${data.creatorEmail})</p>
+          <a href="https://patipetra.com/admin" style="display:inline-block;background:#C9832E;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px">
+            Admin Panelinde İncele →
+          </a>
+        </div>`
+      );
+    }
+
+    return NextResponse.json({ success: true });
       }
       await sendEmail(data.userEmail, `Sorunuz Yanitlandi - ${data.vetName}`,
         `<div style="font-family:sans-serif;padding:20px">

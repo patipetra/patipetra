@@ -81,8 +81,23 @@ export async function seedDefaultCommunities(): Promise<void> {
 
 // ─── Tüm toplulukları getir ───────────────────────────────────────────────────
 export async function getCommunities(): Promise<Community[]> {
-  const snap = await getDocs(query(collection(db,'communities'), orderBy('memberCount','desc')));
-  return snap.docs.map(d => ({id:d.id,...d.data()} as Community));
+  try {
+    const snap = await getDocs(query(
+      collection(db,'communities'),
+      where('status','in',['active', null]),
+      orderBy('memberCount','desc')
+    ));
+    // isDefault olanları veya status active olanları göster
+    return snap.docs
+      .map(d => ({id:d.id,...d.data()} as Community))
+      .filter((c:any) => c.isDefault || c.status === 'active');
+  } catch {
+    // Fallback - index yoksa
+    const snap = await getDocs(collection(db,'communities'));
+    return snap.docs
+      .map(d => ({id:d.id,...d.data()} as Community))
+      .filter((c:any) => c.isDefault || c.status === 'active');
+  }
 }
 
 // ─── Slug ile topluluk getir ──────────────────────────────────────────────────
@@ -96,7 +111,11 @@ export async function getCommunityBySlug(slug: string): Promise<Community|null> 
 // ─── Topluluk oluştur ─────────────────────────────────────────────────────────
 export async function createCommunity(data: Omit<Community,'id'|'memberCount'|'postCount'|'createdAt'>): Promise<string> {
   const docRef = await addDoc(collection(db,'communities'), {
-    ...data, memberCount:0, postCount:0, createdAt:serverTimestamp(),
+    ...data,
+    memberCount: 0,
+    postCount:   0,
+    status:      'pending',
+    createdAt:   serverTimestamp(),
   });
   return docRef.id;
 }
