@@ -1716,17 +1716,121 @@ function PremiumCodesView() {
         </div>
       )}
 
-      {/* Açıklama */}
-      <div className="mt-6 bg-[rgba(201,131,46,.08)] border border-[rgba(201,131,46,.15)] rounded-[14px] p-4 text-sm text-white/50">
+      {/* Manuel aktivasyon */}
+      <div className="mt-6 bg-[#1a1a2e] rounded-[14px] border border-white/[.06] p-5">
+        <div className="font-semibold text-[#C9832E] mb-3">🔧 Manuel Aktivasyon (kod girilmemişse)</div>
+        <p className="text-xs text-white/40 mb-3">Kullanıcı kodu girmemişse e-posta ile bulup manuel aktif edebilirsiniz.</p>
+        <ManualActivationForm/>
+      </div>
+
+      <div className="mt-4 bg-[rgba(201,131,46,.08)] border border-[rgba(201,131,46,.15)] rounded-[14px] p-4 text-sm text-white/50">
         <div className="font-semibold text-[#C9832E] mb-2">📋 Nasıl çalışır?</div>
         <ol className="space-y-1 text-xs">
           <li>1. Kullanıcı premium sayfasında benzersiz kod üretir</li>
           <li>2. Shopier'de ödeme yapar, sipariş notuna kodu yazar</li>
           <li>3. Para hesabınıza geçince Shopier'den mail alırsınız</li>
           <li>4. Bu ekranda ilgili kodu bulup "Aktif Et" butonuna basın</li>
-          <li>5. Kullanıcıya otomatik bildirim ve mail gider</li>
+          <li>5. Kod yoksa "Manuel Aktivasyon" ile e-posta ile aktif edin</li>
         </ol>
       </div>
+    </div>
+  );
+}
+
+// ── Manuel Aktivasyon ─────────────────────────────────────────────────────────
+function ManualActivationForm() {
+  const [email,   setEmail]   = useState('');
+  const [planId,  setPlanId]  = useState('premium_monthly');
+  const [months,  setMonths]  = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [result,  setResult]  = useState('');
+
+  const PLAN_OPTIONS = [
+    {id:'premium_monthly',  name:'Premium Aylık',      months:1,  price:249},
+    {id:'premium_yearly',   name:'Pro Yıllık',          months:12, price:2490},
+    {id:'corporate_monthly',name:'Kurumsal Aylık',      months:1,  price:599},
+    {id:'corporate_yearly', name:'Kurumsal Yıllık',     months:12, price:6110},
+  ];
+
+  async function activate() {
+    if (!email.trim()) return;
+    setLoading(true); setResult('');
+    try {
+      // Email ile kullanıcı bul
+      const snap = await getDocs(query(collection(db,'users'), where('email','==',email.trim())));
+      if (snap.empty) { setResult('❌ Bu e-posta ile kayıtlı kullanıcı bulunamadı.'); return; }
+
+      const userDoc = snap.docs[0];
+      const userId  = userDoc.id;
+      const plan    = PLAN_OPTIONS.find(p=>p.id===planId)!;
+      const expiry  = new Date(Date.now() + months*30*24*60*60*1000);
+
+      // Planı aktif et
+      await updateDoc(doc(db,'users',userId), {
+        plan:        plan.id,
+        planName:    plan.name,
+        planStarted: serverTimestamp(),
+        planExpiry:  expiry,
+        planCode:    'MANUAL-' + Date.now(),
+      });
+
+      // Bildirim
+      await addDoc(collection(db,'notifications'), {
+        userId,
+        type:      'premium_activated',
+        title:     '✨ Premium Üyeliğiniz Aktif!',
+        message:   `${plan.name} planınız aktif edildi. ${expiry.toLocaleDateString('tr-TR')} tarihine kadar geçerlidir.`,
+        isRead:    false,
+        createdAt: serverTimestamp(),
+      });
+
+      // Mail
+      await fetch('/api/email', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          type: 'premium_activated',
+          data: { userEmail: email.trim(), planName: plan.name, expiry: expiry.toLocaleDateString('tr-TR'), code: 'Manuel aktivasyon' }
+        })
+      }).catch(console.error);
+
+      setResult(`✅ ${email} — ${plan.name} aktif edildi! (${expiry.toLocaleDateString('tr-TR')} tarihine kadar)`);
+      setEmail('');
+    } catch(err:any) {
+      setResult('❌ Hata: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div>
+          <label className="text-[10px] text-white/40 uppercase tracking-[.1em] block mb-1">Kullanıcı E-postası</label>
+          <input value={email} onChange={e=>setEmail(e.target.value)}
+            placeholder="ornek@mail.com"
+            className="w-full px-3 py-2 rounded-[10px] bg-white/[.06] border border-white/[.1] text-white text-sm focus:outline-none focus:border-[#C9832E]"/>
+        </div>
+        <div>
+          <label className="text-[10px] text-white/40 uppercase tracking-[.1em] block mb-1">Plan</label>
+          <select value={planId} onChange={e=>{setPlanId(e.target.value);setMonths(PLAN_OPTIONS.find(p=>p.id===e.target.value)?.months||1);}}
+            className="w-full px-3 py-2 rounded-[10px] bg-white/[.06] border border-white/[.1] text-white text-sm focus:outline-none focus:border-[#C9832E]">
+            {PLAN_OPTIONS.map(p=>(
+              <option key={p.id} value={p.id} style={{background:'#1a1a2e'}}>{p.name} — ₺{p.price.toLocaleString('tr-TR')}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <button onClick={activate} disabled={loading||!email.trim()}
+        className="w-full py-2 rounded-full bg-[#C9832E] text-white text-sm font-semibold hover:bg-[#b87523] disabled:opacity-60">
+        {loading ? 'Aktif ediliyor…' : '✓ Manuel Aktif Et'}
+      </button>
+      {result && (
+        <div className={`text-sm px-3 py-2 rounded-[10px] ${result.startsWith('✅')?'bg-green-500/15 text-green-400':'bg-red-500/15 text-red-400'}`}>
+          {result}
+        </div>
+      )}
     </div>
   );
 }
