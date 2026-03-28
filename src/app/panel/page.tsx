@@ -27,6 +27,16 @@ async function getFavorites(userId: string) {
   } catch { return []; }
 }
 
+// Pet verisini gerçekten çek
+async function getUserPetCount(userId: string): Promise<number> {
+  try {
+    const { getDocs, collection, query, where } = await import('firebase/firestore');
+    const { db } = await import('@/lib/firebase');
+    const snap = await getDocs(query(collection(db,'pets'), where('ownerId','==',userId)));
+    return snap.size;
+  } catch { return 0; }
+}
+
 export default function PanelPage() {
   const router = useRouter();
   const [user,        setUser]        = useState<User|null>(null);
