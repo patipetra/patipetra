@@ -91,7 +91,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
 
   verification: {
-    google: '', // Google Search Console doğrulama kodu buraya
+    google: 'f2a5ed7f62c61b90',
   },
 
   category: 'pets',
