@@ -26,6 +26,7 @@ const NAV = [
   { id:'services',    icon:'🏪', label:'Hizmet Başvuruları',   group:'icerik'   },
   { id:'vetapps',     icon:'🩺', label:'Veteriner Başvuruları',group:'icerik'   },
   { id:'vetprofiles', icon:'👨‍⚕️',label:'Veteriner Profilleri', group:'icerik'   },
+  { id:'communities', icon:'🏘️', label:'Topluluk Başvuruları', group:'icerik'   },
   { id:'store',       icon:'🛒', label:'Mağaza Yönetimi',      group:'magaza'   },
   { id:'plans',       icon:'💎', label:'Premium Planlar',      group:'magaza'   },
   { id:'users',       icon:'👥', label:'Kullanıcılar',         group:'sistem'   },
@@ -135,6 +136,7 @@ export default function AdminPage() {
           {active==='services'     && <ServicesView/>}
           {active==='vetapps'      && <VetApplicationsView user={user}/>}
           {active==='vetprofiles'  && <VetProfilesView/>}
+          {active==='communities'  && <CommunitiesView/>}
           {active==='store'        && <StoreView/>}
           {active==='plans'        && <PlansView/>}
           {active==='users'        && <UsersView/>}
