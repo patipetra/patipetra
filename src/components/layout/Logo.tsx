@@ -1,36 +1,39 @@
+import Image from 'next/image';
+import Link from 'next/link';
+
 interface LogoProps {
-  dark?: boolean;
+  dark?: boolean;   // dark=true → koyu arka plan logosu (footer, dark hero)
   height?: number;
+  linkTo?: string;
 }
 
-export default function Logo({ dark = false, height = 44 }: LogoProps) {
+// Koyu arka plan (footer, dark hero, dark navbar) → altın renkli pati logolu
+const LOGO_DARK_BG = 'https://i.ibb.co/TQ1xbSS/Gemini-Generated-Image-snxibzsnxibzsnxi.png';
+
+// Açık arka plan (beyaz, krem) → koyu renkli standart logo
+const LOGO_LIGHT_BG = 'https://i.ibb.co/n88QsRz0/patipetra-logo.png';
+
+export default function Logo({ dark = false, height = 40, linkTo = '/' }: LogoProps) {
+  const src = dark ? LOGO_DARK_BG : LOGO_LIGHT_BG;
+  const width = height * 4; // logolar genellikle yatay, geniş
+
+  const img = (
+    <Image
+      src={src}
+      alt="Patıpetra"
+      width={width}
+      height={height}
+      style={{ height, width: 'auto', objectFit: 'contain' }}
+      priority
+      unoptimized
+    />
+  );
+
+  if (!linkTo) return img;
+
   return (
-    <svg
-      style={{ height, width: 'auto', display: 'block' }}
-      viewBox="0 0 360 92"
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
-      aria-label="Patıpetra"
-    >
-      <text
-        x="10" y="62"
-        fontFamily="'Playfair Display',Georgia,serif"
-        fontSize="50" fontWeight="600"
-        fill={dark ? '#FDFBF7' : '#2F2622'}
-        letterSpacing="1"
-      >Patı</text>
-      <g transform="translate(77,10)" fill="#C9832E">
-        <circle cx="7"  cy="14" r="2.2" />
-        <circle cx="12" cy="9"  r="2.2" />
-        <circle cx="18" cy="13" r="2.2" />
-        <ellipse cx="13" cy="19" rx="4.6" ry="4" />
-      </g>
-      <text
-        x="100" y="62"
-        fontFamily="'Cormorant Garamond','Times New Roman',serif"
-        fontSize="50" fontStyle="italic" fontWeight="600"
-        fill="#C9832E" letterSpacing="-0.2"
-      >petra</text>
-    </svg>
+    <Link href={linkTo} className="flex items-center flex-shrink-0">
+      {img}
+    </Link>
   );
 }
