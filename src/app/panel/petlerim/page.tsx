@@ -211,34 +211,24 @@ export default function PetlerimPage() {
     if (!aiQ.trim() || !selPet) return;
     setAiLoading(true); setAiA('');
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [{
-            role: 'user',
-            content: `Sen bir veteriner asistanısın. Petim hakkında bilgiler:
-Ad: ${selPet.name}
-Tür: ${SPECIES.find(s=>s.val===selPet.species)?.label}
-Cins: ${selPet.breed||'Belirtilmemiş'}
-Yaş: ${calcAge(selPet.birthDate)}
-Cinsiyet: ${selPet.gender==='female'?'Dişi':'Erkek'}
-Ağırlık: ${selPet.weight||'Belirtilmemiş'} kg
-Alerjiler: ${selPet.allergies||'Yok'}
-Hastalıklar: ${selPet.diseases||'Yok'}
-İlaçlar: ${selPet.medications||'Yok'}
-
-Sorum: ${aiQ}
-
-Türkçe olarak kısa ve öz yanıtla. Bu bir genel bilgi amaçlıdır, kesin tanı için veterinere gidilmeli.`
-          }]
-        })
-      });
+      const speciesLabel = SPECIES.find((s:any)=>s.val===selPet.species)?.label || selPet.species;
+      const prompt = `Sen bir veteriner asistanissin. Petim hakkinda bilgiler:\nAd: ${selPet.name}\nTur: ${speciesLabel}\nCins: ${selPet.breed||'Belirtilmemis'}\nYas: ${calcAge(selPet.birthDate)}\nCinsiyet: ${selPet.gender==='female'?'Disi':'Erkek'}\nAgirlik: ${selPet.weight||'Belirtilmemis'} kg\nAlerjiler: ${selPet.allergies||'Yok'}\nHastaliklar: ${selPet.diseases||'Yok'}\nIlaclar: ${selPet.medications||'Yok'}\n\nSorum: ${aiQ}\n\nTurkce olarak kisa ve oz yanItla. Genel bilgi amaclidir, kesin tani icin veterinere gidilmeli.`;
+      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: 800, temperature: 0.7 },
+          })
+        }
+      );
       const data = await res.json();
-      setAiA(data.content?.[0]?.text || 'Yanıt alınamadı.');
-    } catch(e) { setAiA('Bağlantı hatası. Tekrar deneyin.'); }
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      setAiA(text || 'Yanit alinamadi.');
+    } catch(e) { setAiA('Baglanti hatasi. Tekrar deneyin.'); }
     finally { setAiLoading(false); }
   }
 
