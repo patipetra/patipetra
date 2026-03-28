@@ -91,7 +91,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
 
   verification: {
-    google: 'f2a5ed7f62c61b90',
+    google: ['f2a5ed7f62c61b90', 'sTdvpo17XqE5F2bFfQo4gtzdZl7P3qx-kDPSjOiw9iQ'],
   },
 
   category: 'pets',
