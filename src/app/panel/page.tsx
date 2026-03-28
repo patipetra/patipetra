@@ -12,7 +12,7 @@ const NAV = [
   { id:'petlerim',    icon:'🐾', label:'Pet Pasaportlarım', href:'/panel/petlerim'     },
   { id:'ilanlarim',   icon:'📢', label:'İlanlarım',         href:'/panel/ilanlarim'    },
   { id:'mesajlar',    icon:'💬', label:'Mesajlarım',        href:'/panel/mesajlar' },
-  { id:'bildirimler', icon:'🔔', label:'Bildirimler',       href:'/panel/bildirimler', badge:5 },
+  { id:'bildirimler', icon:'🔔', label:'Bildirimler',       href:'/panel/bildirimler' },
   { id:'profil',      icon:'👤', label:'Profilim',          href:'/panel/profil'       },
   { id:'premium',     icon:'✦',  label:"Premium'a Geç",     href:'/panel/premium'      },
   { id:'ayarlar',     icon:'⚙',  label:'Ayarlar',           href:'/panel/ayarlar'      },
@@ -90,7 +90,8 @@ export default function PanelPage() {
               className="flex items-center gap-3 px-3 py-[10px] rounded-[12px] text-sm mb-[2px] text-white/60 hover:bg-white/[.07] hover:text-white/90 transition-all">
               <span className="w-[18px] text-center text-[15px] flex-shrink-0">{item.icon}</span>
               <span className="flex-1">{item.label}</span>
-              {item.badge ? <span className="bg-[#C9832E] text-[#2F2622] text-[10px] font-bold px-[7px] py-[2px] rounded-full">{item.badge}</span> : null}
+              {item.id==='bildirimler' && unreadNotif > 0 && <span className="bg-[#C9832E] text-white text-[10px] font-bold px-[7px] py-[2px] rounded-full">{unreadNotif}</span>}
+              {item.id==='mesajlar' && unreadMsg > 0 && <span className="bg-[#C9832E] text-white text-[10px] font-bold px-[7px] py-[2px] rounded-full">{unreadMsg}</span>}
             </Link>
           ))}
 
