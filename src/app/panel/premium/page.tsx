@@ -42,13 +42,12 @@ export default function PremiumPage() {
       if (snap.exists() && snap.data().plans?.length > 0) {
         // Admin'den güncellenen planları kullan
         const dbPlans = snap.data().plans;
-        // PLANS state'ini güncelle - burada doğrudan kullanıyoruz
-        setDbPlans(dbPlans);
+        if (Array.isArray(dbPlans) && dbPlans.length > 0) setDbPlans(dbPlans);
       }
     }).catch(console.error);
   }, []);
 
-  const activePlans = dbPlans;
+  const activePlans = Array.isArray(dbPlans) && dbPlans.length > 0 ? dbPlans : PLANS;
 
   useEffect(() => {
     const unsub = onAuthChange(async u => {
@@ -144,7 +143,7 @@ export default function PremiumPage() {
                 <p className="text-[#7A7368]">Petiniz için en iyisini seçin. Fiyatlar KDV dahildir.</p>
               </div>
               <div className="grid sm:grid-cols-2 gap-5 mb-6">
-                {activePlans.map(plan => (
+                {(activePlans||PLANS).map(plan => (
                   <div key={plan.id}
                     className="bg-white rounded-[24px] p-6 border-2 hover:shadow-lg transition-all cursor-pointer"
                     style={{borderColor: plan.color+'33'}}
@@ -162,7 +161,7 @@ export default function PremiumPage() {
                       <span className="text-sm text-[#9A9188]">/ {plan.period}</span>
                     </div>
                     <div className="space-y-2 mb-5">
-                      {plan.feats.map(f => (
+                      {(Array.isArray(plan.features) ? plan.features : Array.isArray(plan.feats) ? plan.feats : []).map(f => (
                         <div key={f} className="flex items-start gap-2 text-sm text-[#5C4A32]">
                           <span style={{color:plan.color}} className="flex-shrink-0">✓</span>
                           <span>{f}</span>

@@ -57,6 +57,11 @@ export default function Navbar() {
 
             {user ? (
               <>
+                <Link href="/panel/premium"
+                  className="hidden sm:inline-flex items-center gap-1 text-[13px] font-bold px-4 py-[7px] rounded-full transition-all"
+                  style={{background:'#C9832E', color:'white'}}>
+                  ✦ Premium
+                </Link>
                 <Link href="/panel"
                   className="hidden sm:inline-flex text-[13px] font-medium border border-[#8B7355] text-[#5C4A32] px-4 py-[7px] rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">
                   Dashboard
