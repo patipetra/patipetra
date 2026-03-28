@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   robots:{index:true,follow:true,googleBot:{index:true,follow:true,'max-image-preview':'large','max-snippet':-1}},
   icons:{
     icon: [
-      { url: '/favicon.png', type: 'image/svg+xml' },
+      { url: '/favicon.png', type: 'image/png' },
       { url: '/favicon.ico' },
     ],
     apple: '/apple-touch-icon.png',
