@@ -11,7 +11,7 @@ const NAV = [
   { id:'dashboard',   icon:'🏠', label:'Dashboard',        href:'/panel'              },
   { id:'petlerim',    icon:'🐾', label:'Pet Pasaportlarım', href:'/panel/petlerim'     },
   { id:'ilanlarim',   icon:'📢', label:'İlanlarım',         href:'/panel/ilanlarim'    },
-  { id:'mesajlar',    icon:'💬', label:'Mesajlarım',        href:'/panel/mesajlar', badge:3 },
+  { id:'mesajlar',    icon:'💬', label:'Mesajlarım',        href:'/panel/mesajlar' },
   { id:'bildirimler', icon:'🔔', label:'Bildirimler',       href:'/panel/bildirimler', badge:5 },
   { id:'profil',      icon:'👤', label:'Profilim',          href:'/panel/profil'       },
   { id:'premium',     icon:'✦',  label:"Premium'a Geç",     href:'/panel/premium'      },
