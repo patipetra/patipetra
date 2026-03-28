@@ -34,7 +34,7 @@ export default function PremiumPage() {
   const [codeLoading, setCodeLoading] = useState(false);
   const [copied,      setCopied]      = useState(false);
   const [step,        setStep]        = useState<'plans'|'code'|'active'>('plans');
-  const [dbPlans,     setDbPlans]     = useState<any[]>([]);
+  const [dbPlans,     setDbPlans]     = useState<any[]>(PLANS);
 
   useEffect(() => {
     // Firestore'dan planları çek
@@ -48,7 +48,7 @@ export default function PremiumPage() {
     }).catch(console.error);
   }, []);
 
-  const activePlans = dbPlans.length > 0 ? dbPlans : PLANS;
+  const activePlans = dbPlans;
 
   useEffect(() => {
     const unsub = onAuthChange(async u => {
