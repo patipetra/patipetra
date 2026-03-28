@@ -26,7 +26,8 @@ const NAV = [
   { id:'services',    icon:'🏪', label:'Hizmet Başvuruları',   group:'icerik'   },
   { id:'vetapps',     icon:'🩺', label:'Veteriner Başvuruları',group:'icerik'   },
   { id:'vetprofiles', icon:'👨‍⚕️',label:'Veteriner Profilleri', group:'icerik'   },
-  { id:'communities', icon:'🏘️', label:'Topluluk Başvuruları', group:'icerik'   },
+  { id:'communities',  icon:'🏘️', label:'Topluluk Başvuruları', group:'icerik'   },
+  { id:'premiumcodes', icon:'💎', label:'Premium Aktivasyon',   group:'icerik'   },
   { id:'store',       icon:'🛒', label:'Mağaza Yönetimi',      group:'magaza'   },
   { id:'plans',       icon:'💎', label:'Premium Planlar',      group:'magaza'   },
   { id:'users',       icon:'👥', label:'Kullanıcılar',         group:'sistem'   },
@@ -137,6 +138,7 @@ export default function AdminPage() {
           {active==='vetapps'      && <VetApplicationsView user={user}/>}
           {active==='vetprofiles'  && <VetProfilesView/>}
           {active==='communities'  && <CommunitiesView/>}
+          {active==='premiumcodes' && <PremiumCodesView/>}
           {active==='store'        && <StoreView/>}
           {active==='plans'        && <PlansView/>}
           {active==='users'        && <UsersView/>}
@@ -1558,6 +1560,173 @@ function CommunitiesView() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Premium Kod Aktivasyon ────────────────────────────────────────────────────
+function PremiumCodesView() {
+  const [codes,   setCodes]   = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter,  setFilter]  = useState<'pending'|'active'|'expired'>('pending');
+
+  useEffect(() => { loadCodes(); }, []);
+
+  async function loadCodes() {
+    setLoading(true);
+    try {
+      const snap = await getDocs(query(collection(db,'premiumCodes'), orderBy('createdAt','desc')));
+      setCodes(snap.docs.map(d=>({id:d.id,...d.data()})));
+    } catch(e) { console.error(e); }
+    finally { setLoading(false); }
+  }
+
+  async function activate(code: any, months: number) {
+    if (!confirm(`${code.userEmail} — ${code.planName} aktif edilsin mi?`)) return;
+    const now     = new Date();
+    const expiry  = new Date(now.getTime() + months * 30 * 24 * 60 * 60 * 1000);
+    try {
+      // Kullanıcı planını güncelle
+      await updateDoc(doc(db,'users',code.userId), {
+        plan:          code.planId,
+        planName:      code.planName,
+        planStarted:   serverTimestamp(),
+        planExpiry:    expiry,
+        planCode:      code.code,
+      });
+      // Kodu aktif et
+      await updateDoc(doc(db,'premiumCodes',code.id), {
+        status:      'active',
+        activatedAt: serverTimestamp(),
+        expiresAt:   expiry,
+      });
+      // Bildirim gönder
+      await addDoc(collection(db,'notifications'), {
+        userId:    code.userId,
+        type:      'premium_activated',
+        title:     '✨ Premium Üyeliğiniz Aktif!',
+        message:   `${code.planName} planınız aktif edildi. ${expiry.toLocaleDateString('tr-TR')} tarihine kadar geçerlidir.`,
+        isRead:    false,
+        createdAt: serverTimestamp(),
+      });
+      // Mail gönder
+      await fetch('/api/email', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          type: 'premium_activated',
+          data: {
+            userEmail: code.userEmail,
+            planName:  code.planName,
+            expiry:    expiry.toLocaleDateString('tr-TR'),
+            code:      code.code,
+          }
+        })
+      }).catch(console.error);
+
+      setCodes(prev=>prev.map(c=>c.id===code.id?{...c,status:'active'}:c));
+      alert('✅ Premium aktif edildi!');
+    } catch(err:any) { alert('Hata: '+err.message); }
+  }
+
+  async function reject(code: any) {
+    if (!confirm(`${code.code} kodu reddedilsin mi?`)) return;
+    await updateDoc(doc(db,'premiumCodes',code.id), { status:'rejected' });
+    setCodes(prev=>prev.map(c=>c.id===code.id?{...c,status:'rejected'}:c));
+  }
+
+  const filtered = codes.filter(c => c.status === filter);
+  const pending  = codes.filter(c => c.status === 'pending').length;
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-5 flex-wrap items-center">
+        {[
+          {val:'pending',  label:'Bekleyen',  count:codes.filter(c=>c.status==='pending').length},
+          {val:'active',   label:'Aktif',     count:codes.filter(c=>c.status==='active').length},
+          {val:'expired',  label:'Reddedilen',count:codes.filter(c=>c.status==='rejected').length},
+        ].map(f=>(
+          <button key={f.val} onClick={()=>setFilter(f.val as any)}
+            className={`text-sm px-4 py-2 rounded-full transition-all ${filter===f.val?'bg-[#C9832E] text-white':'bg-white/[.06] text-white/60 hover:bg-white/[.1]'}`}>
+            {f.label} <span className="opacity-60">({f.count})</span>
+          </button>
+        ))}
+        {pending>0 && (
+          <span className="ml-auto text-xs bg-red-500/20 text-red-400 px-3 py-1 rounded-full animate-pulse">
+            {pending} yeni ödeme bekliyor!
+          </span>
+        )}
+        <button onClick={loadCodes} className="text-xs px-3 py-2 rounded-full bg-white/[.06] text-white/40">↻ Yenile</button>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div>
+      ) : filtered.length===0 ? (
+        <div className="text-center py-12 text-white/40">
+          <div className="text-4xl mb-3">💎</div>
+          <p>{filter==='pending'?'Bekleyen ödeme yok.':filter==='active'?'Aktif üyelik yok.':'Reddedilen yok.'}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map(c=>(
+            <div key={c.id} className="bg-[#1a1a2e] rounded-[14px] border border-white/[.06] p-4">
+              <div className="flex items-start gap-4 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-2">
+                    <span className="font-mono text-lg font-bold text-[#C9832E] tracking-wider">{c.code}</span>
+                    <span className={`text-[10px] font-bold px-2 py-[2px] rounded-full ${c.status==='pending'?'bg-[rgba(201,131,46,.2)] text-[#C9832E]':c.status==='active'?'bg-green-500/20 text-green-400':'bg-red-500/20 text-red-400'}`}>
+                      {c.status==='pending'?'BEKLEYEN':c.status==='active'?'AKTİF':'REDDEDİLDİ'}
+                    </span>
+                  </div>
+                  <div className="grid sm:grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <div className="text-white/30 mb-[2px]">Kullanıcı</div>
+                      <div className="text-white/70">{c.userEmail}</div>
+                    </div>
+                    <div>
+                      <div className="text-white/30 mb-[2px]">Plan</div>
+                      <div className="text-white/70">{c.planName} — ₺{c.price?.toLocaleString('tr-TR')}</div>
+                    </div>
+                    <div>
+                      <div className="text-white/30 mb-[2px]">Tarih</div>
+                      <div className="text-white/70">{c.createdAt?.toDate?.()?.toLocaleString('tr-TR')||'—'}</div>
+                    </div>
+                  </div>
+                  {c.activatedAt && (
+                    <div className="text-xs text-green-400 mt-2">
+                      ✓ Aktif: {c.activatedAt?.toDate?.()?.toLocaleString('tr-TR')} · Bitiş: {c.expiresAt?.toDate?.()?.toLocaleDateString('tr-TR')}
+                    </div>
+                  )}
+                </div>
+                {c.status==='pending' && (
+                  <div className="flex flex-col gap-2 flex-shrink-0">
+                    <button onClick={()=>activate(c, c.months||1)}
+                      className="text-xs px-4 py-2 rounded-full bg-green-500/15 text-green-400 hover:bg-green-500/25 font-semibold">
+                      ✓ Aktif Et ({c.months||1} ay)
+                    </button>
+                    <button onClick={()=>reject(c)}
+                      className="text-xs px-4 py-2 rounded-full bg-red-500/15 text-red-400 hover:bg-red-500/25">
+                      ✗ Reddet
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Açıklama */}
+      <div className="mt-6 bg-[rgba(201,131,46,.08)] border border-[rgba(201,131,46,.15)] rounded-[14px] p-4 text-sm text-white/50">
+        <div className="font-semibold text-[#C9832E] mb-2">📋 Nasıl çalışır?</div>
+        <ol className="space-y-1 text-xs">
+          <li>1. Kullanıcı premium sayfasında benzersiz kod üretir</li>
+          <li>2. Shopier'de ödeme yapar, sipariş notuna kodu yazar</li>
+          <li>3. Para hesabınıza geçince Shopier'den mail alırsınız</li>
+          <li>4. Bu ekranda ilgili kodu bulup "Aktif Et" butonuna basın</li>
+          <li>5. Kullanıcıya otomatik bildirim ve mail gider</li>
+        </ol>
+      </div>
     </div>
   );
 }

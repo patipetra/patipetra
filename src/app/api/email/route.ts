@@ -151,6 +151,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    else if (type === 'premium_activated') {
+      await sendEmail(data.userEmail, '✨ Patipetra Premium Uyeliginiz Aktif!',
+        `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
+          <div style="background:#2F2622;padding:24px;border-radius:12px;text-align:center;margin-bottom:24px">
+            <h1 style="color:#E8B86D;margin:0;font-size:24px">Patipetra 🐾</h1>
+          </div>
+          <h2 style="color:#2F2622">Tebrikler! Premium Uyeliginiz Aktif</h2>
+          <div style="background:#F7F2EA;padding:20px;border-radius:12px;margin:16px 0">
+            <p style="margin:0 0 8px"><b>Plan:</b> ${data.planName}</p>
+            <p style="margin:0 0 8px"><b>Gecerlilik:</b> ${data.expiry} tarihine kadar</p>
+            <p style="margin:0;color:#9A9188;font-size:13px">Kod: ${data.code}</p>
+          </div>
+          <a href="https://patipetra.com/panel" style="display:inline-block;background:#C9832E;color:white;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin:8px 0">
+            Panele Git →
+          </a>
+          <p style="color:#9A9188;font-size:12px;margin-top:20px">
+            Sorulariniz icin info@patipetra.com adresine yazabilirsiniz.
+          </p>
+        </div>`
+      );
+    }
+
     return NextResponse.json({ success: true });
   } catch(err: any) {
     console.error('Email error:', err);
