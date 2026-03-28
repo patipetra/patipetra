@@ -39,7 +39,7 @@ export default function Navbar() {
         <div className="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-16 h-full flex items-center justify-between gap-4">
           
           {/* Logo */}
-          <Logo dark={false} height={44} linkTo="/"/>
+          <Logo dark={false} height={44} linkTo="/" sizeKey="navbarHeight"/>
 
           {/* Desktop links */}
           <nav className="hidden lg:flex items-center gap-5">

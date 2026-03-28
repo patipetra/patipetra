@@ -20,7 +20,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
           {/* Marka */}
           <div className="col-span-2 lg:col-span-1">
-            <div className="mb-6"><Logo dark={true} height={52} linkTo="/"/></div>
+            <div className="mb-6"><Logo dark={true} height={52} linkTo="/" sizeKey="footerHeight"/></div>
             <p className="text-sm leading-relaxed text-white/50 mb-4">{settings.slogan}</p>
             {settings.email && (
               <a href={`mailto:${settings.email}`} className="text-sm text-[#E8B86D] hover:text-white transition-colors block mb-1">

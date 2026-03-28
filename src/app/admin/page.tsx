@@ -28,6 +28,7 @@ const NAV = [
   { id:'vetprofiles', icon:'👨‍⚕️',label:'Veteriner Profilleri', group:'icerik'   },
   { id:'communities',  icon:'🏘️', label:'Topluluk Başvuruları', group:'icerik'   },
   { id:'premiumcodes', icon:'💎', label:'Premium Aktivasyon',   group:'icerik'   },
+  { id:'logoSettings', icon:'🖼️', label:'Logo Ayarları',         group:'genel'    },
   { id:'store',       icon:'🛒', label:'Mağaza Yönetimi',      group:'magaza'   },
   { id:'plans',       icon:'💎', label:'Premium Planlar',      group:'magaza'   },
   { id:'users',       icon:'👥', label:'Kullanıcılar',         group:'sistem'   },
@@ -139,6 +140,7 @@ export default function AdminPage() {
           {active==='vetprofiles'  && <VetProfilesView/>}
           {active==='communities'  && <CommunitiesView/>}
           {active==='premiumcodes' && <PremiumCodesView/>}
+          {active==='logoSettings' && <LogoSettingsView/>}
           {active==='store'        && <StoreView/>}
           {active==='plans'        && <PlansView/>}
           {active==='users'        && <UsersView/>}
@@ -1831,6 +1833,117 @@ function ManualActivationForm() {
           {result}
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Logo Ayarları ─────────────────────────────────────────────────────────────
+function LogoSettingsView() {
+  const [settings, setSettings] = useState({
+    lightLogo:    'https://i.ibb.co/n88QsRz0/patipetra-logo.png',
+    darkLogo:     'https://i.ibb.co/TQ1xbSS/Gemini-Generated-Image-snxibzsnxibzsnxi.png',
+    navbarHeight:     44,
+    footerHeight:     52,
+    panelHeight:      48,
+    authHeight:       52,
+    authMobileHeight: 48,
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving,  setSaving]  = useState(false);
+  const [saved,   setSaved]   = useState(false);
+
+  useEffect(() => {
+    getDoc(doc(db,'siteSettings','logos')).then(snap => {
+      if (snap.exists()) setSettings(p => ({...p,...snap.data()}));
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  async function save() {
+    setSaving(true);
+    try {
+      await setDoc(doc(db,'siteSettings','logos'), settings, {merge:true});
+      setSaved(true);
+      setTimeout(()=>setSaved(false), 2000);
+    } catch(e) { alert('Hata!'); }
+    finally { setSaving(false); }
+  }
+
+  const INPUT = "w-full px-3 py-2 rounded-[10px] bg-white/[.06] border border-white/[.1] text-white text-sm focus:outline-none focus:border-[#C9832E]";
+  const LABEL = "block text-[10px] text-white/40 uppercase tracking-[.1em] mb-1";
+
+  if (loading) return <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div>;
+
+  return (
+    <div className="max-w-[700px] space-y-6">
+
+      {/* Önizleme */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-white rounded-[14px] p-4 flex flex-col items-center gap-3">
+          <div className="text-[10px] text-gray-400 uppercase tracking-[.1em]">Açık Arka Plan (Navbar)</div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={settings.lightLogo} alt="light logo" style={{height:settings.navbarHeight, width:'auto', maxWidth:'100%', objectFit:'contain'}}/>
+          <div className="text-[11px] text-gray-400">Yükseklik: {settings.navbarHeight}px</div>
+        </div>
+        <div className="bg-[#2F2622] rounded-[14px] p-4 flex flex-col items-center gap-3">
+          <div className="text-[10px] text-white/40 uppercase tracking-[.1em]">Koyu Arka Plan (Footer)</div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={settings.darkLogo} alt="dark logo" style={{height:settings.footerHeight, width:'auto', maxWidth:'100%', objectFit:'contain'}}/>
+          <div className="text-[11px] text-white/40">Yükseklik: {settings.footerHeight}px</div>
+        </div>
+      </div>
+
+      {/* Logo URL'leri */}
+      <div className="bg-[#1a1a2e] rounded-[16px] border border-white/[.06] p-5 space-y-4">
+        <div className="font-semibold text-white mb-2">🔗 Logo URL'leri</div>
+
+        <div>
+          <label className={LABEL}>Açık Arka Plan Logosu (Navbar, beyaz alanlar)</label>
+          <input value={settings.lightLogo} onChange={e=>setSettings(p=>({...p,lightLogo:e.target.value}))} className={INPUT} placeholder="https://..."/>
+          <div className="text-[10px] text-white/30 mt-1">Koyu/renkli logonun kullanılacağı URL</div>
+        </div>
+
+        <div>
+          <label className={LABEL}>Koyu Arka Plan Logosu (Footer, dark alanlar)</label>
+          <input value={settings.darkLogo} onChange={e=>setSettings(p=>({...p,darkLogo:e.target.value}))} className={INPUT} placeholder="https://..."/>
+          <div className="text-[10px] text-white/30 mt-1">Beyaz/altın logonun kullanılacağı URL</div>
+        </div>
+      </div>
+
+      {/* Boyut ayarları */}
+      <div className="bg-[#1a1a2e] rounded-[16px] border border-white/[.06] p-5">
+        <div className="font-semibold text-white mb-4">📐 Logo Boyutları</div>
+        <div className="grid grid-cols-2 gap-4">
+          {[
+            {key:'navbarHeight',     label:'Navbar (PC)',         min:24, max:80},
+            {key:'footerHeight',     label:'Footer',              min:24, max:100},
+            {key:'panelHeight',      label:'Panel Sidebar',       min:24, max:80},
+            {key:'authHeight',       label:'Giriş/Kayıt (PC)',    min:24, max:100},
+            {key:'authMobileHeight', label:'Giriş/Kayıt (Mobil)', min:24, max:80},
+          ].map(f=>(
+            <div key={f.key}>
+              <label className={LABEL}>{f.label}</label>
+              <div className="flex items-center gap-3">
+                <input type="range" min={f.min} max={f.max}
+                  value={(settings as any)[f.key]}
+                  onChange={e=>setSettings(p=>({...p,[f.key]:Number(e.target.value)}))}
+                  className="flex-1 accent-[#C9832E]"/>
+                <span className="text-white font-mono text-sm w-12 text-right">{(settings as any)[f.key]}px</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Kaydet */}
+      <button onClick={save} disabled={saving}
+        className="w-full py-3 rounded-full bg-[#C9832E] text-white font-semibold hover:bg-[#b87523] disabled:opacity-60 transition-all">
+        {saving ? 'Kaydediliyor…' : saved ? '✓ Kaydedildi!' : 'Ayarları Kaydet'}
+      </button>
+
+      <div className="text-xs text-white/30 text-center">
+        Not: Logo boyutu değişiklikleri sitenin yeniden deploy edilmesine gerek duymadan Firestore'dan anlık uygulanır.
+      </div>
     </div>
   );
 }
