@@ -238,7 +238,7 @@ export default function HomePage() {
             <p className="text-white/50 text-[clamp(14px,1.8vw,16px)] mb-8 max-w-[480px] mx-auto leading-relaxed">Ücretsiz kayıt ol, pet profilini oluştur ve Türkiye'nin en büyük pet platformuna katıl.</p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link href="/kayit" className="inline-flex bg-[#C9832E] text-white text-[15px] font-semibold px-8 py-3 rounded-full hover:bg-[#b87523] transition-all">Hemen Başla →</Link>
-              <Link href={`/ilanlar/${l.id}`} className="inline-flex border border-white/20 text-white text-[15px] font-medium px-8 py-3 rounded-full hover:bg-white/10 transition-all">İlanları İncele</Link>
+              <Link href={"/ilanlar"} className="inline-flex border border-white/20 text-white text-[15px] font-medium px-8 py-3 rounded-full hover:bg-white/10 transition-all">İlanları İncele</Link>
             </div>
           </div>
         </section>
