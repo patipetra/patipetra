@@ -179,7 +179,7 @@ export default function PremiumPage() {
               <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5 text-center">
                 <h3 className="font-semibold text-[#2F2622] mb-1">Ücretsiz Plan</h3>
                 <p className="text-sm text-[#7A7368] mb-2">1 ilan, 1 pet pasaport, temel özellikler</p>
-                <Link href="/panel" className="text-sm text-[#C9832E] hover:underline">Dashboard'a Dön →</Link>
+                <Link href="/panel" className="text-sm text-[#C9832E] hover:underline">Kontrol Paneli'a Dön →</Link>
               </div>
             </>
           )}
@@ -255,7 +255,7 @@ export default function PremiumPage() {
               <h2 className="font-serif text-3xl font-semibold text-[#2F2622] mb-2">Premium Aktif!</h2>
               <p className="text-[#7A7368] mb-6">Tüm premium özelliklerine erişebilirsiniz.</p>
               <Link href="/panel" className="inline-flex bg-[#C9832E] text-white text-sm font-semibold px-6 py-3 rounded-full hover:bg-[#b87523]">
-                Dashboard'a Git →
+                Kontrol Paneli'a Git →
               </Link>
             </div>
           )}

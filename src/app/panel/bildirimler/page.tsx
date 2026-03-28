@@ -73,9 +73,13 @@ export default function BildirimlerPage() {
   return (
     <div className="min-h-screen bg-[#F7F2EA]">
       <div className="lg:ml-[260px] p-6 max-w-[700px]">
-        <Link href="/panel" className="text-sm text-[#7A7368] hover:text-[#2F2622] mb-6 inline-flex items-center gap-1">← Dashboard</Link>
+        <Link href="/panel" className="text-sm text-[#7A7368] hover:text-[#2F2622] mb-6 inline-flex items-center gap-1">← Kontrol Paneli</Link>
         <div className="flex items-center justify-between mb-6">
-          <h1 className="font-serif text-2xl font-semibold text-[#2F2622]">
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <Link href="/" className="text-xs px-3 py-2 rounded-full bg-white border border-[rgba(196,169,107,.2)] text-[#5C4A32] hover:bg-[#F7F2EA] transition-all flex-shrink-0">🌐 Ana Sayfa</Link>
+          <Link href="/panel" className="text-xs px-3 py-2 rounded-full bg-white border border-[rgba(196,169,107,.2)] text-[#5C4A32] hover:bg-[#F7F2EA] transition-all flex-shrink-0">← Kontrol Paneli</Link>
+        </div>
+        <h1 className="font-serif text-2xl font-semibold text-[#2F2622]">
             🔔 Bildirimler
             {unread>0&&<span className="text-sm font-normal text-[#C9832E] ml-2">({unread} yeni)</span>}
           </h1>

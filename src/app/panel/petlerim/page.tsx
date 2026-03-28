@@ -239,6 +239,10 @@ export default function PetlerimPage() {
   if (view==='list') return (
     <div className="min-h-screen bg-[#F7F2EA] lg:ml-[260px]">
       <div className="max-w-[900px] mx-auto px-4 py-8">
+        <div className="flex items-center gap-3 mb-4">
+          <Link href="/" className="text-xs px-3 py-2 rounded-full bg-white border border-[rgba(196,169,107,.2)] text-[#5C4A32] hover:bg-[#F7F2EA] transition-all">🌐 Ana Sayfa</Link>
+          <Link href="/panel" className="text-xs px-3 py-2 rounded-full bg-white border border-[rgba(196,169,107,.2)] text-[#5C4A32] hover:bg-[#F7F2EA] transition-all">← Kontrol Paneli</Link>
+        </div>
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-serif text-3xl font-semibold text-[#2F2622]">🐾 Pet Pasaportlarım</h1>

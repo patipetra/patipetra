@@ -325,7 +325,7 @@ Bir araştırmaya göre, evcil hayvan sahiplerinin %60'ı son yapılan aşının
 
 ## Nasıl Oluşturulur?
 
-Patıpetra'ya üye olduktan sonra Dashboard'dan "Pet Pasaportlarım" bölümüne girin. "Yeni Pet Ekle" butonuna tıklayarak birkaç dakika içinde ilk pasaportunuzu oluşturabilirsiniz.
+Patıpetra'ya üye olduktan sonra Kontrol Paneli'dan "Pet Pasaportlarım" bölümüne girin. "Yeni Pet Ekle" butonuna tıklayarak birkaç dakika içinde ilk pasaportunuzu oluşturabilirsiniz.
 
 Gerekli bilgiler: Pet adı, türü, ırkı, doğum tarihi, cinsiyet, kilo ve fotoğraf. Sonrasında aşı ve sağlık bilgilerini eklemeye başlayabilirsiniz.
 

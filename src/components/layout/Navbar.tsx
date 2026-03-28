@@ -64,7 +64,7 @@ export default function Navbar() {
                 </Link>
                 <Link href="/panel"
                   className="hidden sm:inline-flex text-[13px] font-medium border border-[#8B7355] text-[#5C4A32] px-4 py-[7px] rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">
-                  Dashboard
+                  Kontrol Paneli
                 </Link>
                 <button onClick={async () => { await logout(); router.push('/'); }}
                   className="text-[13px] text-[#7A7368] px-3 py-[7px] rounded-full hover:text-[#2F2622] transition-colors">
@@ -106,7 +106,7 @@ export default function Navbar() {
         <div className="mt-6 flex flex-col gap-3">
           {user ? (
             <>
-              <Link href="/panel" className="font-serif text-[24px] font-light text-[#C9832E]">Dashboard →</Link>
+              <Link href="/panel" className="font-serif text-[24px] font-light text-[#C9832E]">Kontrol Paneli →</Link>
               <button onClick={async()=>{await logout();router.push('/');}} className="text-left font-serif text-[20px] text-[#7A7368]">Çıkış Yap</button>
             </>
           ) : (

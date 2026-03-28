@@ -14,7 +14,7 @@ import { db, storage } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 
 const NAV = [
-  { id:'dashboard',   icon:'📊', label:'Dashboard',            group:'genel'    },
+  { id:'dashboard',   icon:'📊', label:'Kontrol Paneli',            group:'genel'    },
   { id:'siteSettings',icon:'⚙️', label:'Site Ayarları',        group:'genel'    },
   { id:'seo',         icon:'🔍', label:'SEO Yönetimi',         group:'genel'    },
   { id:'popup',       icon:'📣', label:'Popup Yönetimi',       group:'genel'    },
@@ -151,7 +151,7 @@ export default function AdminPage() {
   );
 }
 
-// ── Dashboard ─────────────────────────────────────────────────────────────────
+// ── Kontrol Paneli ─────────────────────────────────────────────────────────────────
 function DashView({setActive}:{setActive:(s:string)=>void}) {
   const [stats,setStats]=useState({users:0,listings:0,pending:0,vets:0,services:0,blogPending:0,vetApps:0});
   useEffect(()=>{
@@ -1539,7 +1539,7 @@ function SettingsView() {
       <div className="bg-[#1a1a2e] rounded-[16px] border border-white/[.06] p-5">
         <h3 className="text-sm font-semibold text-white mb-4">🔗 Hızlı Linkler</h3>
         <div className="flex flex-col gap-2">
-          {[['Firebase Console','https://console.firebase.google.com'],['Vercel Dashboard','https://vercel.com/patipetra'],['GitHub Repo','https://github.com/patipetra/patipetra'],['Google Analytics','https://analytics.google.com'],['Resend Dashboard','https://resend.com'],['Google reCAPTCHA','https://www.google.com/recaptcha/admin']].map(([l,url])=>(
+          {[['Firebase Console','https://console.firebase.google.com'],['Vercel Kontrol Paneli','https://vercel.com/patipetra'],['GitHub Repo','https://github.com/patipetra/patipetra'],['Google Analytics','https://analytics.google.com'],['Resend Kontrol Paneli','https://resend.com'],['Google reCAPTCHA','https://www.google.com/recaptcha/admin']].map(([l,url])=>(
             <a key={l} href={url} target="_blank" rel="noopener noreferrer"
               className="flex items-center justify-between px-4 py-3 rounded-[12px] bg-white/[.04] border border-white/[.06] text-sm text-white/60 hover:bg-white/[.08] hover:text-white/80 transition-all">
               {l} <span className="text-white/30">↗</span>

@@ -65,7 +65,7 @@ export default function Footer() {
           <div>
             <div className="text-[11px] font-semibold tracking-[.2em] uppercase text-white/30 mb-4">Hesap</div>
             <div className="flex flex-col gap-2 text-sm">
-              {[['Kayıt Ol','/kayit'],['Giriş Yap','/giris'],['Dashboard','/panel'],['Pet Pasaport','/panel/petlerim'],['Premium','/panel/premium'],['Veteriner Başvuru','/veterinerler/basvur']].map(([l,h])=>(
+              {[['Kayıt Ol','/kayit'],['Giriş Yap','/giris'],['Kontrol Paneli','/panel'],['Pet Pasaport','/panel/petlerim'],['Premium','/panel/premium'],['Veteriner Başvuru','/veterinerler/basvur']].map(([l,h])=>(
                 <Link key={l} href={h} className="text-white/50 hover:text-white transition-colors">{l}</Link>
               ))}
             </div>

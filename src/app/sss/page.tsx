@@ -13,7 +13,7 @@ const FAQS = [
     {q:'Platformu mobilde kullanabilir miyim?', a:'Evet, platform tam mobil uyumludur. Tarayıcınızdan erişebilirsiniz.'},
   ]},
   {cat:'İlanlar', items:[
-    {q:'İlan nasıl veririm?', a:'Dashboard\'dan "İlan Ver" butonuna tıklayarak yeni ilan oluşturabilirsiniz. İlanlar admin onayından sonra yayına girer.'},
+    {q:'İlan nasıl veririm?', a:'Kontrol Paneli\'dan "İlan Ver" butonuna tıklayarak yeni ilan oluşturabilirsiniz. İlanlar admin onayından sonra yayına girer.'},
     {q:'İlanım ne zaman yayına girer?', a:'İlanlar genellikle 24 saat içinde admin tarafından incelenerek onaylanır veya reddedilir.'},
     {q:'Kaç ilan verebilirim?', a:'Ücretsiz üyelikte 2, Premium\'da 10, Pro Yıllık\'ta sınırsız ilan verebilirsiniz.'},
   ]},
@@ -22,7 +22,7 @@ const FAQS = [
     {q:'Kaç pet ekleyebilirim?', a:'Ücretsiz üyelikte 1, Premium ve üzeri planlarda sınırsız pet profili oluşturabilirsiniz.'},
   ]},
   {cat:'Premium', items:[
-    {q:'Premium\'u nasıl satın alabilirim?', a:'Dashboard\'dan "Premium\'a Geç" bölümüne giderek iyzico ile güvenli ödeme yapabilirsiniz.'},
+    {q:'Premium\'u nasıl satın alabilirim?', a:'Kontrol Paneli\'dan "Premium\'a Geç" bölümüne giderek iyzico ile güvenli ödeme yapabilirsiniz.'},
     {q:'Premium\'u iptal edebilir miyim?', a:'Evet, ayarlar sayfasından istediğiniz zaman iptal edebilirsiniz. Dönem sonuna kadar özellikleriniz aktif kalır.'},
     {q:'İşletme hesabı nasıl açarım?', a:'/hizmetler/basvur adresinden başvurunuzu yapın. Ödeme ve admin onayı sonrası işletme profiliniz yayına girer.'},
   ]},

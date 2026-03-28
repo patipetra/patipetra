@@ -8,7 +8,7 @@ import Logo from '@/components/layout/Logo';
 import type { User } from 'firebase/auth';
 
 const NAV = [
-  { id:'dashboard',   icon:'🏠', label:'Dashboard',        href:'/panel'              },
+  { id:'dashboard',   icon:'🏠', label:'Kontrol Paneli',        href:'/panel'              },
   { id:'petlerim',    icon:'🐾', label:'Pet Pasaportlarım', href:'/panel/petlerim'     },
   { id:'ilanlarim',   icon:'📢', label:'İlanlarım',         href:'/panel/ilanlarim'    },
   { id:'mesajlar',    icon:'💬', label:'Mesajlarım',        href:'/panel/mesajlar' },
@@ -87,6 +87,11 @@ export default function PanelPage() {
           </div>
         </div>
         <nav className="flex-1 px-2 py-3">
+          <Link href="/" className="flex items-center gap-3 px-3 py-[10px] mb-1 rounded-[10px] text-white/50 hover:bg-white/[.06] hover:text-white transition-all text-sm">
+            <span className="w-[18px] text-center text-[15px] flex-shrink-0">🌐</span>
+            <span>Ana Sayfaya Dön</span>
+          </Link>
+          <div className="h-[1px] bg-white/[.06] mx-3 mb-2"/>
           {NAV.map(item => (
             <Link key={item.id} href={item.href} onClick={() => setSidebarOpen(false)}
               className="flex items-center gap-3 px-3 py-[10px] rounded-[12px] text-sm mb-[2px] text-white/60 hover:bg-white/[.07] hover:text-white/90 transition-all">
@@ -131,7 +136,7 @@ export default function PanelPage() {
               <span className="w-[18px] h-[1.5px] bg-[#2F2622] rounded"/>
               <span className="w-[18px] h-[1.5px] bg-[#2F2622] rounded"/>
             </button>
-            <h1 className="font-serif text-xl font-semibold text-[#2F2622]">Dashboard</h1>
+            <h1 className="font-serif text-xl font-semibold text-[#2F2622]">Kontrol Paneli</h1>
           </div>
           <div className="flex items-center gap-2">
             {admin && (

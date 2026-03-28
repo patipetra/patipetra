@@ -211,7 +211,11 @@ function MesajlarContent() {
           </>
         ) : (
           <>
-            <h1 className="font-serif text-xl font-semibold text-[#2F2622]">💬 Mesajlar</h1>
+            <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <Link href="/" className="text-xs px-3 py-2 rounded-full bg-white border border-[rgba(196,169,107,.2)] text-[#5C4A32] hover:bg-[#F7F2EA] transition-all flex-shrink-0">🌐 Ana Sayfa</Link>
+          <Link href="/panel" className="text-xs px-3 py-2 rounded-full bg-white border border-[rgba(196,169,107,.2)] text-[#5C4A32] hover:bg-[#F7F2EA] transition-all flex-shrink-0">← Kontrol Paneli</Link>
+        </div>
+        <h1 className="font-serif text-xl font-semibold text-[#2F2622]">💬 Mesajlar</h1>
             {totalUnread > 0 && (
               <span className="bg-[#C9832E] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
                 {totalUnread > 9 ? '9+' : totalUnread}

@@ -365,7 +365,11 @@ export default function IlanlarimPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="font-serif text-2xl font-semibold text-[#2F2622]">İlanlarım</h1>
+          <div className="flex items-center gap-3 mb-4">
+          <Link href="/" className="text-xs px-3 py-2 rounded-full bg-white border border-[rgba(196,169,107,.2)] text-[#5C4A32] hover:bg-[#F7F2EA] transition-all">🌐 Ana Sayfa</Link>
+          <Link href="/panel" className="text-xs px-3 py-2 rounded-full bg-white border border-[rgba(196,169,107,.2)] text-[#5C4A32] hover:bg-[#F7F2EA] transition-all">← Kontrol Paneli</Link>
+        </div>
+        <h1 className="font-serif text-2xl font-semibold text-[#2F2622]">İlanlarım</h1>
           <p className="text-sm text-[#7A7368] mt-1">{listings.length} ilan</p>
         </div>
         <button onClick={openNew} className="bg-[#C9832E] text-white text-sm font-medium px-5 py-2 rounded-full hover:bg-[#b87523] transition-colors">

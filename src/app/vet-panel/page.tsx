@@ -11,7 +11,7 @@ import { db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 
 const NAV = [
-  { id:'dashboard',  icon:'📊', label:'Dashboard'     },
+  { id:'dashboard',  icon:'📊', label:'Kontrol Paneli'     },
   { id:'questions',  icon:'💬', label:'Gelen Sorular' },
   { id:'appointments',icon:'📅',label:'Randevular'    },
   { id:'profile',    icon:'👤', label:'Profilim'      },
@@ -86,7 +86,7 @@ export default function VetPanelPage() {
 
       <div className="flex-1 lg:ml-[240px]">
         <header className="h-16 bg-[rgba(247,242,234,.95)] backdrop-blur-[16px] border-b border-[rgba(196,169,107,.15)] sticky top-0 z-[100] flex items-center justify-between px-4 sm:px-6">
-          <h1 className="font-serif text-xl font-semibold text-[#2F2622]">{NAV.find(n=>n.id===active)?.label||'Dashboard'}</h1>
+          <h1 className="font-serif text-xl font-semibold text-[#2F2622]">{NAV.find(n=>n.id===active)?.label||'Kontrol Paneli'}</h1>
           <div className="flex items-center gap-2 text-sm text-[#7A7368]">
             <div className="w-2 h-2 rounded-full bg-green-500"/>
             <span>Aktif</span>
@@ -94,7 +94,7 @@ export default function VetPanelPage() {
         </header>
 
         <main className="p-4 sm:p-6">
-          {active==='dashboard'    && <VetDashboard user={user} setActive={setActive}/>}
+          {active==='dashboard'    && <VetKontrol Paneli user={user} setActive={setActive}/>}
           {active==='questions'    && <VetQuestions user={user}/>}
           {active==='appointments' && <VetAppointments user={user}/>}
           {active==='profile'      && <VetProfile user={user}/>}
@@ -104,8 +104,8 @@ export default function VetPanelPage() {
   );
 }
 
-// ── Dashboard ─────────────────────────────────────────────────────────────────
-function VetDashboard({ user, setActive }: { user: User|null; setActive:(s:string)=>void }) {
+// ── Kontrol Paneli ─────────────────────────────────────────────────────────────────
+function VetKontrol Paneli({ user, setActive }: { user: User|null; setActive:(s:string)=>void }) {
   const [stats, setStats] = useState({questions:0, unanswered:0, appointments:0, pending:0});
 
   useEffect(() => {
