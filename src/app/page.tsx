@@ -67,7 +67,7 @@ export default function HomePage() {
                 <Link href="/kayit" className="inline-flex items-center bg-[#C9832E] text-white text-[15px] font-semibold px-7 py-3 rounded-full hover:bg-[#b87523] transition-all hover:-translate-y-[1px]">
                   Ücretsiz Başla →
                 </Link>
-                <Link href="/ilanlar" className="inline-flex items-center border border-white/20 text-white text-[15px] font-medium px-7 py-3 rounded-full hover:bg-white/10 transition-all">
+                <Link href={`/ilanlar/${l.id}`} className="inline-flex items-center border border-white/20 text-white text-[15px] font-medium px-7 py-3 rounded-full hover:bg-white/10 transition-all">
                   İlanları Gör
                 </Link>
               </div>
@@ -112,7 +112,7 @@ export default function HomePage() {
                 <div className="text-[11px] font-semibold tracking-[.28em] uppercase text-[#8B7355] mb-2">Sahiplendirme</div>
                 <h2 className="font-serif text-[clamp(24px,4vw,36px)] font-light text-[#2F2622]">Yuva bekleyen <em className="italic text-[#C9832E]">dostlar</em></h2>
               </div>
-              <Link href="/ilanlar" className="hidden sm:inline-flex border border-[#8B7355] text-[#5C4A32] text-sm font-medium px-5 py-2 rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">Tüm İlanlar →</Link>
+              <Link href={`/ilanlar/${l.id}`} className="hidden sm:inline-flex border border-[#8B7355] text-[#5C4A32] text-sm font-medium px-5 py-2 rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">Tüm İlanlar →</Link>
             </div>
             {loading ? (
               <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div>
@@ -125,7 +125,7 @@ export default function HomePage() {
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {listings.map((l:any)=>(
-                  <Link key={l.id} href="/ilanlar"
+                  <Link key={l.id} href={`/ilanlar/${l.id}`}
                     className="bg-[#F7F2EA] rounded-[20px] overflow-hidden border border-[rgba(196,169,107,.12)] hover:shadow-lg hover:-translate-y-1 transition-all block">
                     <div className="h-[180px] bg-[#EDE5D3] flex items-center justify-center text-5xl overflow-hidden">
                       {l.imageUrls?.[0]
@@ -238,7 +238,7 @@ export default function HomePage() {
             <p className="text-white/50 text-[clamp(14px,1.8vw,16px)] mb-8 max-w-[480px] mx-auto leading-relaxed">Ücretsiz kayıt ol, pet profilini oluştur ve Türkiye'nin en büyük pet platformuna katıl.</p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link href="/kayit" className="inline-flex bg-[#C9832E] text-white text-[15px] font-semibold px-8 py-3 rounded-full hover:bg-[#b87523] transition-all">Hemen Başla →</Link>
-              <Link href="/ilanlar" className="inline-flex border border-white/20 text-white text-[15px] font-medium px-8 py-3 rounded-full hover:bg-white/10 transition-all">İlanları İncele</Link>
+              <Link href={`/ilanlar/${l.id}`} className="inline-flex border border-white/20 text-white text-[15px] font-medium px-8 py-3 rounded-full hover:bg-white/10 transition-all">İlanları İncele</Link>
             </div>
           </div>
         </section>

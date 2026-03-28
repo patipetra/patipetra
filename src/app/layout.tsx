@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import PWAInstaller from '@/components/PWAInstaller';
+import PopupManager from '@/components/PopupManager';
 import './globals.css';
 
 export const viewport: Viewport = {
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       `}}/>
     </head>
       <body>{children}<PWAInstaller/>
+      <PopupManager/>
       </body>
     </html>
   );
