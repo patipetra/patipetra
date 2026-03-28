@@ -112,7 +112,7 @@ export default function HomePage() {
                 <div className="text-[11px] font-semibold tracking-[.28em] uppercase text-[#8B7355] mb-2">Sahiplendirme</div>
                 <h2 className="font-serif text-[clamp(24px,4vw,36px)] font-light text-[#2F2622]">Yuva bekleyen <em className="italic text-[#C9832E]">dostlar</em></h2>
               </div>
-              <Link href={`/ilanlar/${l.id}`} className="hidden sm:inline-flex border border-[#8B7355] text-[#5C4A32] text-sm font-medium px-5 py-2 rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">Tüm İlanlar →</Link>
+              <Link href="/ilanlar" className="hidden sm:inline-flex border border-[#8B7355] text-[#5C4A32] text-sm font-medium px-5 py-2 rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">Tüm İlanlar →</Link>
             </div>
             {loading ? (
               <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div>
