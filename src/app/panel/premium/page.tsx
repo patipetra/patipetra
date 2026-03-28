@@ -211,7 +211,13 @@ export default function PremiumPage() {
                     </div>
                   ))}
                 </div>
-                <a href="https://shopier.com/patipetra" target="_blank" rel="noopener noreferrer"
+                <a href={
+                    selPlan?.id === 'premium_monthly'   ? 'https://www.shopier.com/patipetra/45634400' :
+                    selPlan?.id === 'premium_yearly'    ? 'https://www.shopier.com/patipetra/45634466' :
+                    selPlan?.id === 'corporate_monthly' ? 'https://www.shopier.com/patipetra/45634552' :
+                    selPlan?.id === 'corporate_yearly'  ? 'https://www.shopier.com/patipetra/45634618' :
+                    'https://www.shopier.com/patipetra'
+                  } target="_blank" rel="noopener noreferrer"
                   className="w-full py-4 rounded-full text-white text-base font-semibold text-center block hover:opacity-90 mb-3"
                   style={{background:selPlan.color}}>
                   Shopier'de Ödeme Yap →
