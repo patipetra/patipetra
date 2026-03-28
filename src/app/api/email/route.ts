@@ -12,7 +12,10 @@ async function sendEmail(to: string, subject: string, html: string) {
       'Content-Type':  'application/json',
       'Authorization': `Bearer ${RESEND_API_KEY}`,
     },
-    body: JSON.stringify({ from: `Patipetra <${FROM_EMAIL}>`, to, subject, html }),
+    body: JSON.stringify({
+      from: `Patipetra <${FROM_EMAIL}>`,
+      to, subject, html,
+    }),
   });
   return res.json();
 }
@@ -31,14 +34,13 @@ export async function POST(req: NextRequest) {
           <p><b>Telefon:</b> ${data.phone}</p>
           <p><b>E-posta:</b> ${data.email}</p>
           <p><b>Uzmanliklar:</b> ${(data.specs||[]).join(', ')}</p>
-          <a href="https://patipetra.com/admin">Admin Paneline Git</a>
+          <a href="https://patipetra.com/admin" style="display:inline-block;background:#C9832E;color:white;padding:12px 24px;border-radius:8px;text-decoration:none">Admin Paneline Git</a>
         </div>`
       );
       await sendEmail(data.email, 'Patipetra Veteriner Basvurunuz Alindi',
         `<div style="font-family:sans-serif;padding:20px">
           <h2>Merhaba ${data.fullName},</h2>
           <p>Basvurunuz alindi. 2 is gunu icinde incelenecek.</p>
-          <p>Gelismeler bu adrese bildirilecek.</p>
         </div>`
       );
     }
@@ -47,10 +49,9 @@ export async function POST(req: NextRequest) {
       await sendEmail(data.vetEmail, 'Patipetra - Goruntulusu Gorusme Daveti',
         `<div style="font-family:sans-serif;padding:20px">
           <h2>Merhaba ${data.vetName},</h2>
-          <p>Basvurunuz icin goruntulusu gorusme planlanmistir.</p>
+          <p>Goruntulusu gorusme planlanmistir.</p>
           <p><b>Tarih:</b> ${new Date(data.meetingDate).toLocaleString('tr-TR')}</p>
           ${data.adminNotes ? `<p><b>Not:</b> ${data.adminNotes}</p>` : ''}
-          <p>Hazir oldugunuzu info@patipetra.com adresine bildirin.</p>
         </div>`
       );
     }
@@ -59,7 +60,6 @@ export async function POST(req: NextRequest) {
       await sendEmail(data.vetEmail, 'Patipetra Veteriner Sozlesmesi',
         `<div style="font-family:sans-serif;padding:20px">
           <h2>Merhaba ${data.vetName},</h2>
-          <p>Sozlesme detaylari asagidadir:</p>
           <p><b>Plan:</b> ${data.planType === 'yearly' ? 'Yillik' : 'Aylik'}</p>
           <p><b>Aylik Ucret:</b> ${data.monthlyFee} TL</p>
           <p><b>Yillik Ucret:</b> ${data.yearlyFee} TL</p>
@@ -71,36 +71,17 @@ export async function POST(req: NextRequest) {
     }
 
     else if (type === 'vet_approved') {
-      await sendEmail(data.vetEmail, 'Tebrikler! Patipetra Profiliiniz Yayinda',
+      await sendEmail(data.vetEmail, 'Tebrikler! Patipetra Profiliniz Yayinda',
         `<div style="font-family:sans-serif;padding:20px">
           <h2>Tebrikler ${data.vetName}!</h2>
           <p>Veteriner profiliniz onaylandi ve yayina girdi.</p>
-          <a href="https://patipetra.com/vet-panel">Veteriner Panelinize Gidin</a>
+          <a href="https://patipetra.com/vet-panel" style="display:inline-block;background:#C9832E;color:white;padding:12px 24px;border-radius:8px;text-decoration:none">Veteriner Panelinize Gidin</a>
         </div>`
       );
     }
 
     else if (type === 'question_answered') {
-      if (!data.userEmail) {
-        else if (type === 'community_request') {
-      await sendEmail(
-        ADMIN_EMAIL,
-        `🐾 Yeni Topluluk Başvurusu: ${data.communityName}`,
-        `<div style="font-family:sans-serif;padding:20px;max-width:600px">
-          <h2>Yeni Topluluk Başvurusu</h2>
-          <p><b>Topluluk Adı:</b> ${data.communityName}</p>
-          <p><b>Açıklama:</b> ${data.description}</p>
-          <p><b>Kategori:</b> ${data.category}</p>
-          <p><b>Kurucu:</b> ${data.creatorName} (${data.creatorEmail})</p>
-          <a href="https://patipetra.com/admin" style="display:inline-block;background:#C9832E;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px">
-            Admin Panelinde İncele →
-          </a>
-        </div>`
-      );
-    }
-
-    return NextResponse.json({ success: true });
-      }
+      if (!data.userEmail) return NextResponse.json({ success: true });
       await sendEmail(data.userEmail, `Sorunuz Yanitlandi - ${data.vetName}`,
         `<div style="font-family:sans-serif;padding:20px">
           <h2>Merhaba ${data.userName},</h2>
@@ -111,7 +92,7 @@ export async function POST(req: NextRequest) {
           <div style="background:#fff3e0;padding:16px;border-radius:8px;border-left:4px solid #C9832E">
             <p><b>Yanit:</b> ${data.answer}</p>
           </div>
-          <a href="https://patipetra.com/veterinerler/${data.vetSlug}">Veteriner Profiline Git</a>
+          <a href="https://patipetra.com/veterinerler/${data.vetSlug}" style="display:inline-block;background:#C9832E;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;margin-top:16px">Veteriner Profiline Git</a>
         </div>`
       );
     }
@@ -125,7 +106,7 @@ export async function POST(req: NextRequest) {
           <div style="background:#F7F2EA;padding:16px;border-radius:8px;border-left:4px solid #C9832E">
             <p>${data.question}</p>
           </div>
-          <a href="https://patipetra.com/vet-panel">Veteriner Panelinde Yanitla</a>
+          <a href="https://patipetra.com/vet-panel" style="display:inline-block;background:#C9832E;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;margin-top:16px">Veteriner Panelinde Yanitla</a>
         </div>`
       );
     }
@@ -139,7 +120,7 @@ export async function POST(req: NextRequest) {
           <p><b>Telefon:</b> ${data.userPhone}</p>
           ${data.petName ? `<p><b>Pet:</b> ${data.petName}</p>` : ''}
           ${data.note ? `<p><b>Not:</b> ${data.note}</p>` : ''}
-          <a href="https://patipetra.com/vet-panel">Randevuyu Onayla</a>
+          <a href="https://patipetra.com/vet-panel" style="display:inline-block;background:#C9832E;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;margin-top:16px">Randevuyu Onayla</a>
         </div>`
       );
     }
@@ -152,13 +133,26 @@ export async function POST(req: NextRequest) {
           <div style="background:#F7F2EA;padding:16px;border-radius:8px">
             <p>${data.message}</p>
           </div>
-          <a href="https://patipetra.com/vet-panel">Veteriner Panelinde Gor</a>
+          <a href="https://patipetra.com/vet-panel" style="display:inline-block;background:#C9832E;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;margin-top:16px">Veteriner Panelinde Gor</a>
+        </div>`
+      );
+    }
+
+    else if (type === 'community_request') {
+      await sendEmail(ADMIN_EMAIL, `Yeni Topluluk Basvurusu: ${data.communityName}`,
+        `<div style="font-family:sans-serif;padding:20px">
+          <h2>Yeni Topluluk Basvurusu</h2>
+          <p><b>Topluluk Adi:</b> ${data.communityName}</p>
+          <p><b>Aciklama:</b> ${data.description}</p>
+          <p><b>Kategori:</b> ${data.category}</p>
+          <p><b>Kurucu:</b> ${data.creatorName} (${data.creatorEmail})</p>
+          <a href="https://patipetra.com/admin" style="display:inline-block;background:#C9832E;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;margin-top:16px">Admin Panelinde Incele</a>
         </div>`
       );
     }
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch(err: any) {
     console.error('Email error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
