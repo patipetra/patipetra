@@ -25,7 +25,7 @@ export default function IlanDetayPage() {
   const [sent,    setSent]    = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthChange(u => setUser(u));
+    const unsub = onAuthChange(u => { setUser(u); });
     return () => unsub();
   }, []);
 
@@ -193,6 +193,7 @@ export default function IlanDetayPage() {
               </div>
 
               {/* İletişim */}
+              <div id="iletisim"/>
               <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5 mb-4">
                 <h3 className="font-serif text-base font-semibold text-[#2F2622] mb-4">İletişim</h3>
 
