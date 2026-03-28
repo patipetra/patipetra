@@ -148,7 +148,7 @@ export default function PremiumPage() {
   }
 
   const isPremium = userPlan?.plan && userPlan.plan !== 'free';
-  const planExpiry = userPlan?.planExpiry?.toDate?.();
+  const planExpiry = userPlan?.planExpiry ? (typeof userPlan.planExpiry.toDate === 'function' ? userPlan.planExpiry.toDate() : new Date(userPlan.planExpiry)) : null;
   const daysLeft = planExpiry ? Math.ceil((planExpiry.getTime()-Date.now())/(1000*60*60*24)) : 0;
 
   return (
