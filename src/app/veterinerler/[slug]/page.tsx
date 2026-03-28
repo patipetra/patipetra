@@ -33,7 +33,7 @@ export default function VetProfilePage() {
   const [user,      setUser]      = useState<User|null>(null);
   const [vet,       setVet]       = useState<any|null>(null);
   const [loading,   setLoading]   = useState(true);
-  const [tab,       setTab]       = useState<'hakkinda'|'sorular'|'randevu'>('hakkinda');
+  const [tab,       setTab]       = useState<'hakkinda'|'sorular'|'randevu'|'yorumlar'>('hakkinda');
   const [questions, setQuestions] = useState<any[]>([]);
   const [loadingQ,  setLoadingQ]  = useState(false);
 
