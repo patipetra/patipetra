@@ -99,7 +99,7 @@ export default function GirisPage() {
     <div className="min-h-screen grid lg:grid-cols-[.9fr_1.1fr]">
       <div className="hidden lg:flex flex-col justify-between bg-[#2F2622] p-14 relative overflow-hidden">
         <div className="absolute w-[350px] h-[350px] rounded-full bg-[rgba(201,131,46,.1)] blur-[70px] -top-20 -right-20 pointer-events-none"/>
-        <Link href="/"><Logo dark height={40}/></Link>
+        <Logo dark={true} height={52} linkTo="/"/>
         <div className="relative z-10 my-10">
           <h2 className="font-serif text-[clamp(28px,3vw,40px)] font-light text-white leading-[1.05] mb-6">
             Petiniz için <em className="italic text-[#E8B86D]">her şey</em> tek platformda
@@ -120,7 +120,7 @@ export default function GirisPage() {
 
       <div className="flex items-center justify-center bg-[#F7F2EA] p-6 lg:p-12">
         <div className="w-full max-w-[420px]">
-          <div className="lg:hidden mb-8 text-center"><Link href="/"><Logo height={44}/></Link></div>
+          <div className="lg:hidden mb-8 text-center"><Logo dark={false} height={48} linkTo="/"/></div>
           <h1 className="font-serif text-[clamp(24px,4vw,32px)] font-semibold text-[#2F2622] mb-1">Tekrar hoş geldiniz 🐾</h1>
           <p className="text-sm text-[#7A7368] mb-6">Hesabınıza giriş yapın.</p>
 

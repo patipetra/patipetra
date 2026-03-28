@@ -89,7 +89,7 @@ export default function KayitPage() {
       {/* Sol panel */}
       <div className="hidden lg:flex flex-col justify-between bg-[#2F2622] p-14 relative overflow-hidden">
         <div className="absolute w-[350px] h-[350px] rounded-full bg-[rgba(201,131,46,.1)] blur-[70px] -top-20 -right-20 pointer-events-none"/>
-        <Link href="/"><Logo dark height={40}/></Link>
+        <Logo dark={true} height={52} linkTo="/"/>
         <div className="relative z-10 my-10">
           <h2 className="font-serif text-[clamp(28px,3vw,40px)] font-light text-white leading-[1.05] mb-6">
             Türkiye'nin <em className="italic text-[#E8B86D]">pet platformuna</em> katıl
@@ -111,7 +111,7 @@ export default function KayitPage() {
       {/* Sağ panel */}
       <div className="flex items-center justify-center bg-[#F7F2EA] p-6 lg:p-12 min-h-screen">
         <div className="w-full max-w-[480px]">
-          <div className="lg:hidden mb-8 text-center"><Link href="/"><Logo height={44}/></Link></div>
+          <div className="lg:hidden mb-8 text-center"><Logo dark={false} height={48} linkTo="/"/></div>
 
           {/* ADIM 1: Hesap türü seç */}
           {step === 'type' && (
