@@ -67,7 +67,7 @@ export default function HomePage() {
                 <Link href="/kayit" className="inline-flex items-center bg-[#C9832E] text-white text-[15px] font-semibold px-7 py-3 rounded-full hover:bg-[#b87523] transition-all hover:-translate-y-[1px]">
                   Ücretsiz Başla →
                 </Link>
-                <Link href={`/ilanlar/${l.id}`} className="inline-flex items-center border border-white/20 text-white text-[15px] font-medium px-7 py-3 rounded-full hover:bg-white/10 transition-all">
+                <Link href="/ilanlar" className="inline-flex items-center border border-white/20 text-white text-[15px] font-medium px-7 py-3 rounded-full hover:bg-white/10 transition-all">
                   İlanları Gör
                 </Link>
               </div>
