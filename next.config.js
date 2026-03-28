@@ -62,10 +62,7 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
 
-  // Bundle analizi
-  experimental: {
-    optimizeCss: true,
-  },
+
 };
 
 module.exports = nextConfig;
