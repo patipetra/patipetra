@@ -176,7 +176,7 @@ export default function PetlerimPage() {
   const [mForm, setMForm] = useState({date:new Date().toISOString().split('T')[0],title:'',note:'',emoji:'🎂'});
   const [pForm, setPForm] = useState({type:'Pire & Kene',date:'',nextDate:'',product:'',vet:''});
   const [dForm, setDForm] = useState({date:new Date().toISOString().split('T')[0],mood:'great',appetite:'iyi',activity:'aktif',poop:'normal',note:''});
-  const [activeTab, setActiveTab] = useState<'ozet'|'asılar'|'saglik'|'kilo'|'parazit'|'gunluk'|'milestone'|'ai'>('ozet');
+  const [activeTab, setActiveTab] = useState<'ozet'|'asilar'|'saglik'|'kilo'|'parazit'|'gunluk'|'milestone'|'ai'>('ozet');
 
   useEffect(() => {
     const unsub = onAuthChange(async u => {
