@@ -48,8 +48,7 @@ export default function HomePage() {
         <section className="relative min-h-[92vh] flex items-center bg-[#2F2622] overflow-hidden pt-[68px]">
           <div className="absolute inset-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://images.unsplash.com/photo-1450778869180-41d0601e046e?auto=format&fit=crop&w=1920&q=80" alt="Patıpetra — Evcil Hayvan Platformu"
-              alt="" className="w-full h-full object-cover opacity-20"/>
+            <img src="https://images.unsplash.com/photo-1450778869180-41d0601e046e?auto=format&fit=crop&w=1920&q=80" alt="Patıpetra — Evcil Hayvan Platformu" className="w-full h-full object-cover opacity-20"/>
           </div>
           <div className="absolute w-[600px] h-[600px] rounded-full bg-[rgba(201,131,46,.15)] blur-[120px] -top-40 -right-40 pointer-events-none"/>
           <div className="relative max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-16 py-20">
