@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { onAuthChange } from '@/lib/auth';
 import FavoriteButton from '@/components/FavoriteButton';
+import PlanGate from '@/components/PlanGate';
 import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
@@ -203,14 +204,16 @@ export default function IlanDetayPage() {
 
                 {/* Telefon */}
                 {listing.contactPhone && (
-                  <a href={`tel:${listing.contactPhone}`}
-                    className="flex items-center gap-3 p-3 bg-[#F7F2EA] rounded-[12px] mb-3 hover:bg-[#EDE5D3] transition-colors">
-                    <span className="text-xl">📞</span>
-                    <div>
-                      <div className="text-[10px] text-[#9A9188] uppercase tracking-[.1em]">Telefon</div>
-                      <div className="text-sm font-medium text-[#2F2622]">{listing.contactPhone}</div>
-                    </div>
-                  </a>
+                  <PlanGate require="contact" blur={true}>
+                    <a href={`tel:${listing.contactPhone}`}
+                      className="flex items-center gap-3 p-3 bg-[#F7F2EA] rounded-[12px] mb-3 hover:bg-[#EDE5D3] transition-colors">
+                      <span className="text-xl">📞</span>
+                      <div>
+                        <div className="text-[10px] text-[#9A9188] uppercase tracking-[.1em]">Telefon</div>
+                        <div className="text-sm font-medium text-[#2F2622]">{listing.contactPhone}</div>
+                      </div>
+                    </a>
+                  </PlanGate>
                 )}
 
                 {/* Mesaj gönder */}

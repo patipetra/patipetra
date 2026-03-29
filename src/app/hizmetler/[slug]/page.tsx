@@ -12,6 +12,7 @@ import {
 import { db } from '@/lib/firebase';
 import ReviewSystem from '@/components/ReviewSystem';
 import FavoriteButton from '@/components/FavoriteButton';
+import PlanGate from '@/components/PlanGate';
 import type { User } from 'firebase/auth';
 
 const TYPE_LABEL: Record<string,string> = {
@@ -301,10 +302,12 @@ export default function HizmetDetayPage() {
                   📅 Randevu Al
                 </button>
                 {service.phone && (
-                  <a href={`tel:${service.phone}`}
-                    className="w-full py-3 rounded-full border border-[#8B7355] text-[#5C4A32] text-sm font-semibold hover:bg-[#5C4A32] hover:text-white transition-all flex items-center justify-center gap-2">
-                    📞 Ara
-                  </a>
+                  <PlanGate require="contact" blur={false}>
+                    <a href={`tel:${service.phone}`}
+                      className="w-full py-3 rounded-full border border-[#8B7355] text-[#5C4A32] text-sm font-semibold hover:bg-[#5C4A32] hover:text-white transition-all flex items-center justify-center gap-2">
+                      📞 Ara
+                    </a>
+                  </PlanGate>
                 )}
                 {service && <FavoriteButton targetId={service.id} targetType="service" targetName={service.businessName}/>}
                 <div className="border-t border-[#F7F2EA] pt-3 space-y-2 text-xs text-[#7A7368]">

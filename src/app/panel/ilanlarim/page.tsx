@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { usePlan } from '@/hooks/usePlan';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthChange } from '@/lib/auth';
@@ -52,6 +53,7 @@ const EMPTY: Omit<Listing, 'id'|'status'|'viewCount'|'favoriteCount'|'createdAt'
 };
 
 export default function IlanlarimPage() {
+  const { limits, plan } = usePlan();
   const router  = useRouter();
   const [user,     setUser]     = useState<User|null>(null);
   const [listings, setListings] = useState<Listing[]>([]);

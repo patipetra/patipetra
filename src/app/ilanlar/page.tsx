@@ -135,7 +135,23 @@ export default function IlanlarPage() {
             </p>
           </div>
 
-          {loading ? (
+          {!limits.canSeeListings && !loading ? (
+            <div className="text-center py-20 bg-white rounded-[24px] border border-[rgba(196,169,107,.12)]">
+              <div className="text-6xl mb-4">🔒</div>
+              <h3 className="font-serif text-2xl font-semibold text-[#2F2622] mb-3">İlanları Görmek İçin Üye Olun</h3>
+              <p className="text-[#7A7368] mb-6 max-w-md mx-auto leading-relaxed">
+                Türkiye genelinde sahiplendirme ilanlarını görmek için ücretsiz üye olun.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <a href="/kayit" className="bg-[#C9832E] text-white text-sm font-semibold px-6 py-3 rounded-full hover:bg-[#b87523]">
+                  Ücretsiz Üye Ol →
+                </a>
+                <a href="/giris" className="border border-[#8B7355] text-[#5C4A32] text-sm font-medium px-6 py-3 rounded-full hover:bg-[#5C4A32] hover:text-white transition-all">
+                  Giriş Yap
+                </a>
+              </div>
+            </div>
+          ) : loading ? (
             <div className="flex justify-center py-20">
               <div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/>
             </div>
