@@ -463,480 +463,353 @@ export default function PetlerimPage() {
     const spec = SPECIES.find(s=>s.val===selPet.species);
     const upcomingVaccines = (selPet.vaccines||[]).filter(v=>v.nextDate && daysUntil(v.nextDate)<=30 && daysUntil(v.nextDate)>=0);
     const overdueVaccines  = (selPet.vaccines||[]).filter(v=>v.nextDate && daysUntil(v.nextDate)<0);
-
+    const INPUT = "w-full px-3 py-2 rounded-[10px] bg-[#F7F2EA] border border-[#E3D9C6] text-[#2F2622] text-sm focus:outline-none focus:border-[#C9832E]";
+    const LABEL = "block text-[10px] text-[#9A9188] uppercase tracking-[.1em] mb-1";
     return (
       <div className="min-h-screen bg-[#F7F2EA] lg:ml-[260px]">
         <div className="max-w-[900px] mx-auto px-4 py-8">
-          {/* Geri */}
-          <button onClick={()=>{setSelPet(null);setView('list');setAiQ('');setAiA('');}} className="text-sm text-[#7A7368] hover:text-[#2F2622] mb-6 flex items-center gap-1">
-            ← Tüm Petler
-          </button>
+          <div className="flex items-center gap-3 mb-4">
+            <button onClick={()=>{setSelPet(null);setView('list');}} className="text-xs px-3 py-2 rounded-full bg-white border border-[rgba(196,169,107,.2)] text-[#5C4A32] hover:bg-[#F7F2EA]">🌐 Ana Sayfa</button>
+            <button onClick={()=>{setSelPet(null);setView('list');}} className="text-xs px-3 py-2 rounded-full bg-white border border-[rgba(196,169,107,.2)] text-[#5C4A32] hover:bg-[#F7F2EA]">← Tüm Petler</button>
+          </div>
 
           {/* Profil header */}
           <div className="bg-white rounded-[24px] border border-[rgba(196,169,107,.12)] overflow-hidden mb-5 shadow-sm">
             <div className="h-32 bg-gradient-to-br from-[#2F2622] to-[#5C4A32] relative">
-              {selPet.avatarUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={selPet.avatarUrl} alt={selPet.name} className="w-full h-full object-cover opacity-40"/>
-              )}
+              {selPet.avatarUrl && <img src={selPet.avatarUrl} alt={selPet.name} className="w-full h-full object-cover opacity-40"/>}
             </div>
             <div className="px-6 pb-6">
               <div className="flex items-end gap-4 -mt-10 mb-4">
                 <div className="w-20 h-20 rounded-full border-4 border-white bg-[#F7F2EA] flex items-center justify-center text-4xl overflow-hidden shadow-lg flex-shrink-0">
-                  {selPet.avatarUrl
-                    // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={selPet.avatarUrl} alt="" className="w-full h-full object-cover"/>
-                    : spec?.emoji||'🐾'
-                  }
+                  {selPet.avatarUrl ? <img src={selPet.avatarUrl} alt="" className="w-full h-full object-cover"/> : spec?.emoji||'🐾'}
                 </div>
                 <div className="flex-1 min-w-0 pb-1">
                   <h1 className="font-serif text-2xl font-semibold text-[#2F2622]">{selPet.name}</h1>
-                  <p className="text-sm text-[#7A7368]">
-                    {spec?.label}{selPet.breed?` · ${selPet.breed}`:''}{selPet.birthDate?` · ${calcAge(selPet.birthDate)}`:''}
-                  </p>
+                  <p className="text-sm text-[#7A7368]">{spec?.label}{selPet.breed?` · ${selPet.breed}`:''}{selPet.birthDate?` · ${calcAge(selPet.birthDate)}`:''}</p>
                 </div>
                 <div className="flex gap-2 pb-1">
-                  <button onClick={()=>{setForm({...EMPTY_PET,...selPet});setAvatarPrev(selPet.avatarUrl||'');setStep(1);setView('form');}}
-                    className="text-xs px-3 py-2 rounded-full border border-[#8B7355] text-[#5C4A32] hover:bg-[#5C4A32] hover:text-white transition-all">
-                    ✏️ Düzenle
-                  </button>
-                  <button onClick={()=>deletePet(selPet.id)}
-                    className="text-xs px-3 py-2 rounded-full border border-red-200 text-red-500 hover:bg-red-50 transition-all">
-                    🗑
-                  </button>
+                  <button onClick={()=>{setForm({...EMPTY_PET,...selPet});setAvatarPrev(selPet.avatarUrl||'');setStep(1);setView('form');}} className="text-xs px-3 py-2 rounded-full border border-[#8B7355] text-[#5C4A32] hover:bg-[#5C4A32] hover:text-white transition-all">✏️ Düzenle</button>
+                  <button onClick={()=>deletePet(selPet.id)} className="text-xs px-3 py-2 rounded-full border border-red-200 text-red-500 hover:bg-red-50">🗑</button>
                 </div>
               </div>
-
-              {/* Badges */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {selPet.isVaccinated  && <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-full">✓ Aşılı</span>}
-                {selPet.isSterilized  && <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full">✓ Kısırlaştırılmış</span>}
-                {selPet.microchipId   && <span className="text-xs bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1 rounded-full">✓ Mikroçip: {selPet.microchipId}</span>}
-                {selPet.insurance     && <span className="text-xs bg-[rgba(201,131,46,.1)] text-[#C9832E] px-3 py-1 rounded-full">🛡️ Sigortalı</span>}
+                {selPet.isVaccinated && <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-full">✓ Aşılı</span>}
+                {selPet.isSterilized && <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full">✓ Kısırlaştırılmış</span>}
+                {selPet.microchipId  && <span className="text-xs bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1 rounded-full">✓ Mikroçip: {selPet.microchipId}</span>}
+                {selPet.insurance    && <span className="text-xs bg-[rgba(201,131,46,.1)] text-[#C9832E] px-3 py-1 rounded-full">🛡️ Sigortalı</span>}
               </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-4 gap-3">
-                {[
-                  {l:'Ağırlık',  v:selPet.weight?`${selPet.weight} kg`:'—'},
-                  {l:'Cinsiyet', v:selPet.gender==='female'?'♀ Dişi':'♂ Erkek'},
-                  {l:'Renk',     v:selPet.color||'—'},
-                  {l:'Aşı Sayısı',v:`${(selPet.vaccines||[]).length} aşı`},
-                ].map(s=>(
-                  <div key={s.l} className="bg-[#F7F2EA] rounded-[12px] p-3 text-center">
-                    <div className="text-xs text-[#9A9188] mb-1">{s.l}</div>
-                    <div className="font-semibold text-sm text-[#2F2622]">{s.v}</div>
-                  </div>
-                ))}
-              </div>
+              {(overdueVaccines.length>0||upcomingVaccines.length>0) && (
+                <div className={`rounded-[12px] p-3 text-xs ${overdueVaccines.length>0?'bg-red-50 border border-red-200 text-red-700':'bg-[rgba(201,131,46,.08)] border border-[rgba(201,131,46,.2)] text-[#C9832E]'}`}>
+                  {overdueVaccines.length>0 ? `⚠️ ${overdueVaccines.length} aşı gecikmiş!` : `🔔 ${upcomingVaccines.length} aşı yaklaşıyor`}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Uyarılar */}
-          {(upcomingVaccines.length>0 || overdueVaccines.length>0) && (
-            <div className="space-y-2 mb-5">
-              {overdueVaccines.map(v=>(
-                <div key={v.id} className="bg-red-50 border border-red-200 rounded-[14px] px-4 py-3 flex items-center gap-3">
-                  <span className="text-red-500 text-xl">⚠️</span>
-                  <div>
-                    <div className="font-semibold text-sm text-red-700">{v.name} aşısı gecikmiş!</div>
-                    <div className="text-xs text-red-500">Planlanmış tarih: {v.nextDate}</div>
+          {/* Tab menü */}
+          <div className="bg-white rounded-[16px] border border-[rgba(196,169,107,.12)] p-1 mb-4 flex gap-1 overflow-x-auto" style={{scrollbarWidth:'none'}}>
+            {[
+              {val:'ozet',      label:'📊 Özet'},
+              {val:'asilar',    label:'💉 Aşılar'},
+              {val:'saglik',    label:'🏥 Sağlık'},
+              {val:'kilo',      label:'⚖️ Kilo'},
+              {val:'parazit',   label:'🦟 Parazit'},
+              {val:'gunluk',    label:'📅 Günlük'},
+              {val:'milestone', label:'🏆 Anlar'},
+              {val:'ai',        label:'🤖 AI'},
+            ].map(t=>(
+              <button key={t.val} onClick={()=>setActiveTab(t.val as any)}
+                className={`flex-shrink-0 px-3 py-2 rounded-[10px] text-xs font-medium transition-all whitespace-nowrap ${activeTab===t.val?'bg-[#5C4A32] text-white':'text-[#7A7368] hover:text-[#2F2622]'}`}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* ÖZET TAB */}
+          {activeTab==='ozet' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  {icon:'💉', label:'Aşı',      val:(selPet.vaccines||[]).length,       color:'#C9832E'},
+                  {icon:'🏥', label:'Muayene',   val:(selPet.healthRecords||[]).length,  color:'#1D9E75'},
+                  {icon:'⚖️', label:'Kilo Kay.', val:(selPet.weightHistory||[]).length,  color:'#534AB7'},
+                  {icon:'🦟', label:'Parazit',   val:(selPet.parasites||[]).length,      color:'#D85A30'},
+                ].map(s=>(
+                  <div key={s.label} className="bg-white rounded-[14px] border border-[rgba(196,169,107,.12)] p-3 text-center">
+                    <div className="text-2xl mb-1">{s.icon}</div>
+                    <div className="font-serif text-xl font-semibold" style={{color:s.color}}>{s.val}</div>
+                    <div className="text-[10px] text-[#9A9188]">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+                <h3 className="font-serif text-base font-semibold text-[#2F2622] mb-3">⏱️ Canlı Takip</h3>
+                <div className="space-y-2">
+                  {selPet.birthDate && (
+                    <div className="flex items-center justify-between p-3 bg-[#F7F2EA] rounded-[12px]">
+                      <div className="text-sm text-[#5C4A32]">🎂 Yaşı</div>
+                      <div className="font-semibold text-sm text-[#2F2622]">{calcAge(selPet.birthDate)}</div>
+                    </div>
+                  )}
+                  {selPet.birthDate && (()=>{
+                    const b=new Date(selPet.birthDate); const now=new Date();
+                    const next=new Date(now.getFullYear(),b.getMonth(),b.getDate());
+                    if(next<now) next.setFullYear(now.getFullYear()+1);
+                    const days=Math.ceil((next.getTime()-now.getTime())/(1000*60*60*24));
+                    return (
+                      <div className="flex items-center justify-between p-3 bg-[#F7F2EA] rounded-[12px]">
+                        <div className="text-sm text-[#5C4A32]">🎂 Sonraki Doğum Günü</div>
+                        <div className="font-semibold text-sm text-[#2F2622]">{days===0?'🎉 Bugün!':days===1?'Yarın!':days+' gün sonra'}</div>
+                      </div>
+                    );
+                  })()}
+                  {selPet.weight && (
+                    <div className="flex items-center justify-between p-3 bg-[#F7F2EA] rounded-[12px]">
+                      <div className="text-sm text-[#5C4A32]">⚖️ Güncel Ağırlık</div>
+                      <div className="font-semibold text-sm text-[#2F2622]">{selPet.weight} kg</div>
+                    </div>
+                  )}
+                  {(selPet.vaccines||[]).filter(v=>v.nextDate&&daysUntil(v.nextDate)>=0).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))[0] && (()=>{
+                    const v=(selPet.vaccines||[]).filter(x=>x.nextDate&&daysUntil(x.nextDate)>=0).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))[0];
+                    const d=daysUntil(v.nextDate);
+                    return (
+                      <div className="flex items-center justify-between p-3 bg-[rgba(201,131,46,.06)] rounded-[12px] border border-[rgba(201,131,46,.2)]">
+                        <div className="text-sm text-[#C9832E]">💉 Sonraki Aşı</div>
+                        <div className="font-semibold text-sm text-[#C9832E]">{v.name} — {d===0?'Bugün':d+' gün'}</div>
+                      </div>
+                    );
+                  })()}
+                  {(selPet.parasites||[]).filter(p=>p.nextDate&&daysUntil(p.nextDate)>=0).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))[0] && (()=>{
+                    const p=(selPet.parasites||[]).filter(x=>x.nextDate&&daysUntil(x.nextDate)>=0).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))[0];
+                    const d=daysUntil(p.nextDate);
+                    return (
+                      <div className="flex items-center justify-between p-3 rounded-[12px] border" style={{background:'rgba(216,90,48,.06)',borderColor:'rgba(216,90,48,.2)'}}>
+                        <div className="text-sm" style={{color:'#D85A30'}}>🦟 Sonraki Parazit</div>
+                        <div className="font-semibold text-sm" style={{color:'#D85A30'}}>{p.type} — {d===0?'Bugün':d+' gün'}</div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+              {(selPet.dailyLogs||[]).length>0 && (
+                <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+                  <h3 className="font-serif text-base font-semibold text-[#2F2622] mb-3">📅 Son Günler</h3>
+                  <div className="space-y-2">
+                    {(selPet.dailyLogs||[]).slice(0,5).map((log:any)=>(
+                      <div key={log.id} className="flex items-center gap-3 p-2 bg-[#F7F2EA] rounded-[10px]">
+                        <div className="text-xs text-[#9A9188] w-20 flex-shrink-0">{log.date}</div>
+                        <span className="text-base">{MOODS.find(m=>m.val===log.mood)?.emoji||'😐'}</span>
+                        <div className="text-xs text-[#5C4A32] flex-1">İştah: {log.appetite} · Aktivite: {log.activity}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-              {upcomingVaccines.map(v=>(
-                <div key={v.id} className="bg-[rgba(201,131,46,.08)] border border-[rgba(201,131,46,.2)] rounded-[14px] px-4 py-3 flex items-center gap-3">
-                  <span className="text-xl">🔔</span>
-                  <div>
-                    <div className="font-semibold text-sm text-[#8B7355]">{v.name} aşısı yaklaşıyor</div>
-                    <div className="text-xs text-[#C9832E]">{daysUntil(v.nextDate)} gün sonra · {v.nextDate}</div>
-                  </div>
-                </div>
-              ))}
+              )}
             </div>
           )}
 
-          <div className="grid lg:grid-cols-[1fr_.45fr] gap-5">
-            <div className="space-y-5">
-              {/* Sağlık Bilgileri */}
-              {(selPet.allergies||selPet.diseases||selPet.medications||selPet.dietNotes) && (
-                <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
-                  <h3 className="font-serif text-lg font-semibold text-[#2F2622] mb-4">🏥 Sağlık Bilgileri</h3>
-                  <div className="space-y-3">
-                    {[
-                      {l:'Alerjiler',     v:selPet.allergies,   icon:'🚫'},
-                      {l:'Hastalıklar',   v:selPet.diseases,    icon:'🩺'},
-                      {l:'İlaçlar',       v:selPet.medications, icon:'💊'},
-                      {l:'Diyet Notları', v:selPet.dietNotes,   icon:'🥗'},
-                    ].filter(f=>f.v).map(f=>(
-                      <div key={f.l} className="bg-[#F7F2EA] rounded-[12px] p-3">
-                        <div className="text-[10px] uppercase tracking-[.1em] text-[#9A9188] mb-1">{f.icon} {f.l}</div>
-                        <div className="text-sm text-[#5C4A32]">{f.v}</div>
+          {/* AŞI TAB */}
+          {activeTab==='asilar' && (
+            <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-serif text-lg font-semibold text-[#2F2622]">💉 Aşı Kayıtları</h3>
+                <button onClick={()=>setView('vaccine')} className="text-xs px-3 py-2 rounded-full bg-[#C9832E] text-white hover:bg-[#b87523]">+ Aşı Ekle</button>
+              </div>
+              {(selPet.vaccines||[]).length===0 ? (
+                <div className="text-center py-6 text-[#9A9188] text-sm">Henüz aşı kaydı yok.</div>
+              ) : (
+                <div className="space-y-2">
+                  {[...(selPet.vaccines||[])].sort((a,b)=>b.date.localeCompare(a.date)).map(v=>{
+                    const du=v.nextDate?daysUntil(v.nextDate):null;
+                    return (
+                      <div key={v.id} className="border border-[#F7F2EA] rounded-[12px] p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-semibold text-sm text-[#2F2622]">{v.name}</span>
+                          <button onClick={()=>removeVaccine(v.id)} className="text-red-400 text-xs hover:text-red-600">✕</button>
+                        </div>
+                        <div className="text-xs text-[#9A9188]">Tarih: {v.date}{v.vet?` · ${v.vet}`:''}</div>
+                        {du!==null && <div className={`text-xs mt-1 font-medium ${du<0?'text-red-500':du<=7?'text-[#C9832E]':'text-green-600'}`}>
+                          {du<0?`⚠️ ${Math.abs(du)} gün gecikmiş`:du===0?'🔴 Bugün!':du<=30?`🔔 ${du} gün sonra`:`✓ ${v.nextDate}`}
+                        </div>}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
               )}
-
-              {/* Tab Menü */}
-              <div className="bg-white rounded-[16px] border border-[rgba(196,169,107,.12)] p-1 mb-4 flex gap-1 overflow-x-auto" style={{scrollbarWidth:'none'}}>
-                {[
-                  {val:'ozet',      label:'📊 Özet'},
-                  {val:'asılar',    label:'💉 Aşılar'},
-                  {val:'saglik',    label:'🏥 Sağlık'},
-                  {val:'kilo',      label:'⚖️ Kilo'},
-                  {val:'parazit',   label:'🦟 Parazit'},
-                  {val:'gunluk',    label:'📅 Günlük'},
-                  {val:'milestone', label:'🏆 Anlar'},
-                  {val:'ai',        label:'🤖 AI'},
-                ].map(t=>(
-                  <button key={t.val} onClick={()=>setActiveTab(t.val as any)}
-                    className={`flex-shrink-0 px-3 py-2 rounded-[10px] text-xs font-medium transition-all whitespace-nowrap ${activeTab===t.val?'bg-[#5C4A32] text-white':'text-[#7A7368] hover:text-[#2F2622]'}`}>
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* ÖZET TAB */}
-              {activeTab==='ozet' && (
-                <div className="space-y-4">
-                  {/* Hızlı istatistikler */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[
-                      {icon:'💉', label:'Aşı',      val:(selPet.vaccines||[]).length,          color:'#C9832E'},
-                      {icon:'🏥', label:'Muayene',   val:(selPet.healthRecords||[]).length,     color:'#1D9E75'},
-                      {icon:'⚖️', label:'Kilo Kay.', val:(selPet.weightHistory||[]).length,    color:'#534AB7'},
-                      {icon:'🦟', label:'Parazit',   val:(selPet.parasites||[]).length,        color:'#D85A30'},
-                    ].map(s=>(
-                      <div key={s.label} className="bg-white rounded-[14px] border border-[rgba(196,169,107,.12)] p-3 text-center">
-                        <div className="text-2xl mb-1">{s.icon}</div>
-                        <div className="font-serif text-xl font-semibold" style={{color:s.color}}>{s.val}</div>
-                        <div className="text-[10px] text-[#9A9188]">{s.label}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Canlı sayaçlar */}
-                  <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
-                    <h3 className="font-serif text-base font-semibold text-[#2F2622] mb-3">⏱️ Canlı Takip</h3>
-                    <div className="space-y-3">
-                      {selPet.birthDate && (
-                        <div className="flex items-center justify-between p-3 bg-[#F7F2EA] rounded-[12px]">
-                          <div className="text-sm text-[#5C4A32]">🎂 Yaşı</div>
-                          <div className="font-semibold text-sm text-[#2F2622]">{calcAge(selPet.birthDate)}</div>
-                        </div>
-                      )}
-                      {selPet.birthDate && (
-                        <div className="flex items-center justify-between p-3 bg-[#F7F2EA] rounded-[12px]">
-                          <div className="text-sm text-[#5C4A32]">🎂 Sonraki Doğum Günü</div>
-                          <div className="font-semibold text-sm text-[#2F2622]">{(()=>{
-                            const b = new Date(selPet.birthDate);
-                            const now = new Date();
-                            const next = new Date(now.getFullYear(), b.getMonth(), b.getDate());
-                            if (next < now) next.setFullYear(now.getFullYear()+1);
-                            const days = Math.ceil((next.getTime()-now.getTime())/(1000*60*60*24));
-                            return days===0?'🎉 Bugün!':days===1?'Yarın!':days+' gün sonra';
-                          })()}</div>
-                        </div>
-                      )}
-                      {(selPet.vaccines||[]).filter(v=>v.nextDate&&daysUntil(v.nextDate)>=0).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))[0] && (
-                        <div className="flex items-center justify-between p-3 bg-[rgba(201,131,46,.06)] rounded-[12px] border border-[rgba(201,131,46,.2)]">
-                          <div className="text-sm text-[#C9832E]">💉 Sonraki Aşı</div>
-                          <div className="font-semibold text-sm text-[#C9832E]">
-                            {(()=>{const v=(selPet.vaccines||[]).filter(x=>x.nextDate&&daysUntil(x.nextDate)>=0).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))[0]; const d=daysUntil(v.nextDate); return `${v.name} — ${d===0?'Bugün':d+' gün'}`;})()}
-                          </div>
-                        </div>
-                      )}
-                      {(selPet.parasites||[]).filter(p=>p.nextDate&&daysUntil(p.nextDate)>=0).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))[0] && (
-                        <div className="flex items-center justify-between p-3 bg-[rgba(216,90,48,.06)] rounded-[12px] border border-[rgba(216,90,48,.2)]">
-                          <div className="text-sm" style={{color:'#D85A30'}}>🦟 Sonraki Parazit</div>
-                          <div className="font-semibold text-sm" style={{color:'#D85A30'}}>
-                            {(()=>{const p=(selPet.parasites||[]).filter(x=>x.nextDate&&daysUntil(x.nextDate)>=0).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))[0]; const d=daysUntil(p.nextDate); return `${p.type} — ${d===0?'Bugün':d+' gün'}`;})()}
-                          </div>
-                        </div>
-                      )}
-                      {selPet.weight && (selPet.weightHistory||[]).length>0 && (
-                        <div className="flex items-center justify-between p-3 bg-[#F7F2EA] rounded-[12px]">
-                          <div className="text-sm text-[#5C4A32]">⚖️ Son Kilo</div>
-                          <div className="font-semibold text-sm text-[#2F2622]">
-                            {selPet.weight} kg
-                            {(selPet.weightHistory||[]).length>=2 && (()=>{
-                              const h=(selPet.weightHistory||[]);
-                              const diff=h[h.length-1].weight-h[h.length-2].weight;
-                              return diff>0?<span className="text-red-500 ml-1">▲{diff.toFixed(1)}</span>:diff<0?<span className="text-green-500 ml-1">▼{Math.abs(diff).toFixed(1)}</span>:<span className="text-gray-400 ml-1">━</span>;
-                            })()}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Son günlük loglar */}
-                  {(selPet.dailyLogs||[]).length>0 && (
-                    <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
-                      <h3 className="font-serif text-base font-semibold text-[#2F2622] mb-3">📅 Son 7 Gün</h3>
-                      <div className="space-y-2">
-                        {(selPet.dailyLogs||[]).slice(0,7).map((log:any)=>(
-                          <div key={log.id} className="flex items-center gap-3 p-2 bg-[#F7F2EA] rounded-[10px]">
-                            <div className="text-xs text-[#9A9188] w-20 flex-shrink-0">{log.date}</div>
-                            <span className="text-base">{MOODS.find(m=>m.val===log.mood)?.emoji||'😐'}</span>
-                            <div className="text-xs text-[#5C4A32] flex-1">
-                              İştah: {log.appetite} · Aktivite: {log.activity}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* AŞI TAB */}
-              {activeTab==='asılar' && (
-              <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-serif text-lg font-semibold text-[#2F2622]">💉 Aşı Kayıtları</h3>
-                  <button onClick={()=>setView('vaccine')}
-                    className="text-xs px-3 py-2 rounded-full bg-[#C9832E] text-white hover:bg-[#b87523]">
-                    + Aşı Ekle
-                  </button>
-                </div>
-                {(selPet.vaccines||[]).length===0 ? (
-                  <div className="text-center py-6 text-[#9A9188] text-sm">Henüz aşı kaydı yok.</div>
-                ) : (
-                  <div className="space-y-2">
-                    {[...(selPet.vaccines||[])].sort((a,b)=>b.date.localeCompare(a.date)).map(v=>{
-                      const du = daysUntil(v.nextDate);
-                      return (
-                        <div key={v.id} className="border border-[#F7F2EA] rounded-[12px] p-3 flex items-start gap-3">
-                          <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center text-lg flex-shrink-0">💉</div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm text-[#2F2622]">{v.name}</div>
-                            <div className="text-xs text-[#9A9188]">Yapıldı: {v.date}{v.vet?` · ${v.vet}`:''}</div>
-                            {v.nextDate && (
-                              <div className={`text-xs mt-1 font-medium ${du<0?'text-red-500':du<=30?'text-[#C9832E]':'text-green-600'}`}>
-                                {du<0?`⚠️ ${Math.abs(du)} gün gecikmiş`:du<=30?`🔔 ${du} gün sonra`:du===0?'🔴 Bugün':'✓ '+v.nextDate}
-                              </div>
-                            )}
-                          </div>
-                          <button onClick={()=>removeVaccine(v.id)} className="text-[#9A9188] hover:text-red-500 text-lg flex-shrink-0">✕</button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              </div>
-              )}
-
-              {/* SAĞLIK TAB */}
-              {activeTab==='saglik' && (
-              <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-serif text-lg font-semibold text-[#2F2622]">📋 Sağlık Geçmişi</h3>
-                  <button onClick={()=>setView('health')}
-                    className="text-xs px-3 py-2 rounded-full bg-[#5C4A32] text-white hover:bg-[#2F2622]">
-                    + Kayıt Ekle
-                  </button>
-                </div>
-                {(selPet.healthRecords||[]).length===0 ? (
-                  <div className="text-center py-6 text-[#9A9188] text-sm">Henüz sağlık kaydı yok.</div>
-                ) : (
-                  <div className="space-y-2">
-                    {[...(selPet.healthRecords||[])].sort((a,b)=>b.date.localeCompare(a.date)).map(h=>(
-                      <div key={h.id} className="border border-[#F7F2EA] rounded-[12px] p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-semibold bg-[rgba(201,131,46,.1)] text-[#C9832E] px-2 py-[1px] rounded-full">{h.type}</span>
-                          <span className="text-xs text-[#9A9188]">{h.date}</span>
-                          {h.vet && <span className="text-xs text-[#9A9188]">· {h.vet}</span>}
-                        </div>
-                        <p className="text-sm text-[#5C4A32]">{h.note}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
+          )}
 
+          {/* SAĞLIK TAB */}
+          {activeTab==='saglik' && (
+            <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-serif text-lg font-semibold text-[#2F2622]">📋 Sağlık Geçmişi</h3>
+                <button onClick={()=>setView('health')} className="text-xs px-3 py-2 rounded-full bg-[#5C4A32] text-white hover:bg-[#2F2622]">+ Kayıt Ekle</button>
               </div>
-              )}
-
-              {/* KİLO TAB */}
-              {activeTab==='kilo' && (
-                <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-serif text-lg font-semibold text-[#2F2622]">⚖️ Kilo Takibi</h3>
-                    <button onClick={()=>setView('weight')} className="text-xs px-3 py-2 rounded-full bg-[#534AB7] text-white hover:opacity-90">+ Kilo Ekle</button>
-                  </div>
-                  {(selPet.weightHistory||[]).length===0 ? (
-                    <div className="text-center py-6 text-[#9A9188] text-sm">Henüz kilo kaydı yok.</div>
-                  ) : (
-                    <div className="space-y-2">
-                      {[...(selPet.weightHistory||[])].sort((a,b)=>b.date.localeCompare(a.date)).map((w:any,i:number,arr:any[])=>{
-                        const prev = arr[i+1];
-                        const diff = prev ? w.weight - prev.weight : 0;
-                        return (
-                          <div key={w.id} className="flex items-center gap-3 p-3 bg-[#F7F2EA] rounded-[12px]">
-                            <div className="w-10 h-10 rounded-full bg-[#534AB7] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">⚖️</div>
-                            <div className="flex-1">
-                              <div className="font-semibold text-sm text-[#2F2622]">{w.weight} kg</div>
-                              <div className="text-xs text-[#9A9188]">{w.date}{w.note?` · ${w.note}`:''}</div>
-                            </div>
-                            {diff!==0 && <span className={`text-xs font-bold ${diff>0?'text-red-500':'text-green-500'}`}>{diff>0?'▲':'▼'}{Math.abs(diff).toFixed(1)} kg</span>}
-                          </div>
-                        );
-                      })}
+              {(selPet.healthRecords||[]).length===0 ? (
+                <div className="text-center py-6 text-[#9A9188] text-sm">Henüz sağlık kaydı yok.</div>
+              ) : (
+                <div className="space-y-2">
+                  {[...(selPet.healthRecords||[])].sort((a,b)=>b.date.localeCompare(a.date)).map(h=>(
+                    <div key={h.id} className="border border-[#F7F2EA] rounded-[12px] p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-semibold bg-[rgba(201,131,46,.1)] text-[#C9832E] px-2 py-[1px] rounded-full">{h.type}</span>
+                        <span className="text-xs text-[#9A9188]">{h.date}</span>
+                        {h.vet && <span className="text-xs text-[#9A9188]">· {h.vet}</span>}
+                      </div>
+                      <p className="text-sm text-[#5C4A32]">{h.note}</p>
                     </div>
-                  )}
+                  ))}
                 </div>
               )}
+            </div>
+          )}
 
-              {/* PARAZİT TAB */}
-              {activeTab==='parazit' && (
-                <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-serif text-lg font-semibold text-[#2F2622]">🦟 Parazit Tedavisi</h3>
-                    <button onClick={()=>setView('parasite')} className="text-xs px-3 py-2 rounded-full bg-[#D85A30] text-white hover:opacity-90">+ Tedavi Ekle</button>
-                  </div>
-                  {(selPet.parasites||[]).length===0 ? (
-                    <div className="text-center py-6 text-[#9A9188] text-sm">Henüz parazit kaydı yok.</div>
-                  ) : (
-                    <div className="space-y-2">
-                      {[...(selPet.parasites||[])].sort((a,b)=>b.date.localeCompare(a.date)).map((p:any)=>{
-                        const du = p.nextDate ? daysUntil(p.nextDate) : null;
-                        return (
-                          <div key={p.id} className="border border-[#F7F2EA] rounded-[12px] p-3">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="font-semibold text-sm text-[#2F2622]">🦟 {p.type}</span>
-                              <span className="text-xs text-[#9A9188]">{p.date}</span>
-                            </div>
-                            <div className="text-xs text-[#7A7368]">Ürün: {p.product}{p.vet?` · ${p.vet}`:''}</div>
-                            {du!==null && <div className={`text-xs mt-1 font-medium ${du<0?'text-red-500':du<=7?'text-[#C9832E]':'text-green-600'}`}>
-                              {du<0?`⚠️ ${Math.abs(du)} gün gecikmiş`:du===0?'🔴 Bugün!':du<=7?`🔔 ${du} gün sonra`:`✓ ${p.nextDate}`}
-                            </div>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* GÜNLÜK TAB */}
-              {activeTab==='gunluk' && (
-                <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-serif text-lg font-semibold text-[#2F2622]">📅 Günlük Takip</h3>
-                    <button onClick={()=>setView('daily')} className="text-xs px-3 py-2 rounded-full bg-[#1D9E75] text-white hover:opacity-90">+ Bugün Ekle</button>
-                  </div>
-                  {(selPet.dailyLogs||[]).length===0 ? (
-                    <div className="text-center py-6 text-[#9A9188] text-sm">Henüz günlük kayıt yok.</div>
-                  ) : (
-                    <div className="space-y-2">
-                      {(selPet.dailyLogs||[]).slice(0,30).map((log:any)=>(
-                        <div key={log.id} className="border border-[#F7F2EA] rounded-[12px] p-3">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="text-2xl">{MOODS.find(m=>m.val===log.mood)?.emoji}</span>
-                            <span className="font-semibold text-sm text-[#2F2622]">{log.date}</span>
-                            <span className="text-xs text-[#9A9188] ml-auto">{MOODS.find(m=>m.val===log.mood)?.label}</span>
-                          </div>
-                          <div className="grid grid-cols-3 gap-2 text-xs text-center">
-                            <div className="bg-[#F7F2EA] rounded-[8px] p-2"><div className="text-[#9A9188] mb-1">İştah</div><div className="font-medium text-[#2F2622]">{log.appetite}</div></div>
-                            <div className="bg-[#F7F2EA] rounded-[8px] p-2"><div className="text-[#9A9188] mb-1">Aktivite</div><div className="font-medium text-[#2F2622]">{log.activity}</div></div>
-                            <div className="bg-[#F7F2EA] rounded-[8px] p-2"><div className="text-[#9A9188] mb-1">Dışkı</div><div className="font-medium text-[#2F2622]">{log.poop}</div></div>
-                          </div>
-                          {log.note && <div className="text-xs text-[#7A7368] mt-2">{log.note}</div>}
+          {/* KİLO TAB */}
+          {activeTab==='kilo' && (
+            <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-serif text-lg font-semibold text-[#2F2622]">⚖️ Kilo Takibi</h3>
+                <button onClick={()=>setView('weight')} className="text-xs px-3 py-2 rounded-full bg-[#534AB7] text-white hover:opacity-90">+ Kilo Ekle</button>
+              </div>
+              {(selPet.weightHistory||[]).length===0 ? (
+                <div className="text-center py-6 text-[#9A9188] text-sm">Henüz kilo kaydı yok.</div>
+              ) : (
+                <div className="space-y-2">
+                  {[...(selPet.weightHistory||[])].sort((a,b)=>b.date.localeCompare(a.date)).map((w:any,i:number,arr:any[])=>{
+                    const prev=arr[i+1]; const diff=prev?w.weight-prev.weight:0;
+                    return (
+                      <div key={w.id} className="flex items-center gap-3 p-3 bg-[#F7F2EA] rounded-[12px]">
+                        <div className="w-10 h-10 rounded-full bg-[#534AB7] text-white flex items-center justify-center text-sm flex-shrink-0">⚖️</div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm text-[#2F2622]">{w.weight} kg</div>
+                          <div className="text-xs text-[#9A9188]">{w.date}{w.note?` · ${w.note}`:''}</div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        {diff!==0 && <span className={`text-xs font-bold ${diff>0?'text-red-500':'text-green-500'}`}>{diff>0?'▲':'▼'}{Math.abs(diff).toFixed(1)} kg</span>}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
+            </div>
+          )}
 
-              {/* MİLESTONE TAB */}
-              {activeTab==='milestone' && (
-                <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-serif text-lg font-semibold text-[#2F2622]">🏆 Özel Anlar</h3>
-                    <button onClick={()=>setView('milestone')} className="text-xs px-3 py-2 rounded-full bg-[#C9832E] text-white hover:opacity-90">+ An Ekle</button>
-                  </div>
-                  {(selPet.milestones||[]).length===0 ? (
-                    <div className="text-center py-6 text-[#9A9188] text-sm">Henüz özel an eklenmedi.</div>
-                  ) : (
-                    <div className="space-y-3">
-                      {(selPet.milestones||[]).map((m:any)=>(
-                        <div key={m.id} className="flex items-start gap-3 p-3 bg-[#F7F2EA] rounded-[12px]">
-                          <span className="text-3xl flex-shrink-0">{m.emoji}</span>
-                          <div>
-                            <div className="font-semibold text-sm text-[#2F2622]">{m.title}</div>
-                            <div className="text-xs text-[#9A9188] mb-1">{m.date}</div>
-                            {m.note && <div className="text-xs text-[#5C4A32]">{m.note}</div>}
-                          </div>
+          {/* PARAZİT TAB */}
+          {activeTab==='parazit' && (
+            <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-serif text-lg font-semibold text-[#2F2622]">🦟 Parazit Tedavisi</h3>
+                <button onClick={()=>setView('parasite')} className="text-xs px-3 py-2 rounded-full text-white hover:opacity-90" style={{background:'#D85A30'}}>+ Tedavi Ekle</button>
+              </div>
+              {(selPet.parasites||[]).length===0 ? (
+                <div className="text-center py-6 text-[#9A9188] text-sm">Henüz parazit kaydı yok.</div>
+              ) : (
+                <div className="space-y-2">
+                  {[...(selPet.parasites||[])].sort((a,b)=>b.date.localeCompare(a.date)).map((p:any)=>{
+                    const du=p.nextDate?daysUntil(p.nextDate):null;
+                    return (
+                      <div key={p.id} className="border border-[#F7F2EA] rounded-[12px] p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-semibold text-sm text-[#2F2622]">🦟 {p.type}</span>
+                          <span className="text-xs text-[#9A9188]">{p.date}</span>
                         </div>
-                      ))}
+                        <div className="text-xs text-[#7A7368]">Ürün: {p.product}{p.vet?` · ${p.vet}`:''}</div>
+                        {du!==null && <div className={`text-xs mt-1 font-medium ${du<0?'text-red-500':du<=7?'text-[#C9832E]':'text-green-600'}`}>
+                          {du<0?`⚠️ ${Math.abs(du)} gün gecikmiş`:du===0?'🔴 Bugün!':du<=7?`🔔 ${du} gün sonra`:`✓ ${p.nextDate}`}
+                        </div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* GÜNLÜK TAB */}
+          {activeTab==='gunluk' && (
+            <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-serif text-lg font-semibold text-[#2F2622]">📅 Günlük Takip</h3>
+                <button onClick={()=>setView('daily')} className="text-xs px-3 py-2 rounded-full bg-[#1D9E75] text-white hover:opacity-90">+ Bugün Ekle</button>
+              </div>
+              {(selPet.dailyLogs||[]).length===0 ? (
+                <div className="text-center py-6 text-[#9A9188] text-sm">Henüz günlük kayıt yok.</div>
+              ) : (
+                <div className="space-y-2">
+                  {(selPet.dailyLogs||[]).slice(0,30).map((log:any)=>(
+                    <div key={log.id} className="border border-[#F7F2EA] rounded-[12px] p-3">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl">{MOODS.find(m=>m.val===log.mood)?.emoji}</span>
+                        <span className="font-semibold text-sm text-[#2F2622]">{log.date}</span>
+                        <span className="text-xs text-[#9A9188] ml-auto">{MOODS.find(m=>m.val===log.mood)?.label}</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-xs text-center">
+                        <div className="bg-[#F7F2EA] rounded-[8px] p-2"><div className="text-[#9A9188] mb-1">İştah</div><div className="font-medium">{log.appetite}</div></div>
+                        <div className="bg-[#F7F2EA] rounded-[8px] p-2"><div className="text-[#9A9188] mb-1">Aktivite</div><div className="font-medium">{log.activity}</div></div>
+                        <div className="bg-[#F7F2EA] rounded-[8px] p-2"><div className="text-[#9A9188] mb-1">Dışkı</div><div className="font-medium">{log.poop}</div></div>
+                      </div>
+                      {log.note && <div className="text-xs text-[#7A7368] mt-2">{log.note}</div>}
                     </div>
-                  )}
+                  ))}
                 </div>
               )}
+            </div>
+          )}
 
-              {/* AI TAB */}
-              {activeTab==='ai' && (
-            <div className="space-y-4">
-              {/* Acil vet */}
-              {selPet.emergencyVet && (
-                <div className="bg-red-50 border border-red-200 rounded-[16px] p-4">
-                  <div className="text-xs font-semibold text-red-600 mb-1">🚨 Acil Veteriner</div>
-                  <div className="text-sm text-red-700 font-medium">{selPet.emergencyVet}</div>
-                </div>
-              )}
-
-              {/* AI Asistan */}
-              <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5 sticky top-4">
-                <h3 className="font-serif text-base font-semibold text-[#2F2622] mb-1">🤖 AI Veteriner Asistanı</h3>
-                <p className="text-xs text-[#9A9188] mb-4">{selPet.name} hakkında soru sor</p>
+          {/* MİLESTONE TAB */}
+          {activeTab==='milestone' && (
+            <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-serif text-lg font-semibold text-[#2F2622]">🏆 Özel Anlar</h3>
+                <button onClick={()=>setView('milestone')} className="text-xs px-3 py-2 rounded-full bg-[#C9832E] text-white hover:bg-[#b87523]">+ An Ekle</button>
+              </div>
+              {(selPet.milestones||[]).length===0 ? (
+                <div className="text-center py-6 text-[#9A9188] text-sm">Henüz özel an eklenmedi.</div>
+              ) : (
                 <div className="space-y-3">
-                  {/* Hızlı sorular */}
-                  <div className="flex flex-wrap gap-1">
-                    {[
-                      `${selPet.name} kaç yaşında?`,
-                      'Aşı takvimi nasıl olmalı?',
-                      'Beslenmesine dikkat etmeli miyim?',
-                      'Sağlıklı kilo nedir?',
-                    ].map(q=>(
-                      <button key={q} onClick={()=>setAiQ(q)}
-                        className="text-[10px] bg-[#F7F2EA] text-[#5C4A32] px-2 py-1 rounded-full hover:bg-[#EDE5D3] transition-colors">
-                        {q.length>25?q.slice(0,25)+'…':q}
-                      </button>
-                    ))}
-                  </div>
-                  <textarea value={aiQ} onChange={e=>setAiQ(e.target.value)}
-                    placeholder={`${selPet.name} hakkında soru sor…`} rows={3}
-                    className="w-full px-3 py-2 rounded-[12px] border-[1.5px] border-[#E3D9C6] bg-[#F7F2EA] text-sm focus:outline-none focus:border-[#C9832E] resize-none"/>
-                  <button onClick={askAI} disabled={aiLoading||!aiQ.trim()}
-                    className="w-full py-2 rounded-full bg-[#C9832E] text-white text-sm font-semibold hover:bg-[#b87523] disabled:opacity-60">
-                    {aiLoading?'Düşünüyor…':'Sor →'}
-                  </button>
-                  {aiA && (
-                    <div className="bg-[#F7F2EA] rounded-[12px] p-3">
-                      <div className="text-[10px] font-semibold text-[#C9832E] mb-2">🤖 AI Yanıtı:</div>
-                      <p className="text-xs text-[#5C4A32] leading-relaxed whitespace-pre-wrap">{aiA}</p>
-                      <p className="text-[10px] text-[#9A9188] mt-2">⚠️ Kesin tanı için veterinerinize danışın.</p>
+                  {(selPet.milestones||[]).map((m:any)=>(
+                    <div key={m.id} className="flex items-start gap-3 p-3 bg-[#F7F2EA] rounded-[12px]">
+                      <span className="text-3xl flex-shrink-0">{m.emoji}</span>
+                      <div>
+                        <div className="font-semibold text-sm text-[#2F2622]">{m.title}</div>
+                        <div className="text-xs text-[#9A9188] mb-1">{m.date}</div>
+                        {m.note && <div className="text-xs text-[#5C4A32]">{m.note}</div>}
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Notlar */}
-              {selPet.notes && (
-                <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-4">
-                  <div className="text-[10px] uppercase tracking-[.1em] text-[#9A9188] mb-2">📝 Notlar</div>
-                  <p className="text-sm text-[#5C4A32] leading-relaxed">{selPet.notes}</p>
+                  ))}
                 </div>
               )}
             </div>
-              )}
-          </div>
+          )}
+
+          {/* AI TAB */}
+          {activeTab==='ai' && (
+            <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+              <h3 className="font-serif text-lg font-semibold text-[#2F2622] mb-1">🤖 AI Veteriner Asistanı</h3>
+              <p className="text-xs text-[#9A9188] mb-4">{selPet.name} hakkında her şeyi biliyor. Sağlık, beslenme, davranış hakkında sor.</p>
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {['Aşı takvimi nasıl?','Beslenme önerisi','Kilo durumu normal mi?','Parazit koruması','Yaşına göre bakım'].map(q=>(
+                    <button key={q} onClick={()=>setAiQ(q)} className="text-xs px-3 py-1 rounded-full bg-[#F7F2EA] border border-[#E3D9C6] text-[#5C4A32] hover:border-[#C9832E] hover:text-[#C9832E] transition-all">{q}</button>
+                  ))}
+                </div>
+                <textarea value={aiQ} onChange={e=>setAiQ(e.target.value)} rows={3}
+                  placeholder={`${selPet.name} hakkında sormak istediğin bir şey var mı?`}
+                  className="w-full px-4 py-3 rounded-[14px] bg-[#F7F2EA] border border-[#E3D9C6] text-sm text-[#2F2622] resize-none focus:outline-none focus:border-[#C9832E]"/>
+                <button onClick={askAI} disabled={!aiQ.trim()||aiLoading}
+                  className="w-full py-3 rounded-full bg-[#2F2622] text-white text-sm font-semibold hover:bg-[#5C4A32] disabled:opacity-60">
+                  {aiLoading?'Analiz ediliyor…':'🤖 AI'ye Sor →'}
+                </button>
+                {aiA && (
+                  <div className="bg-[#F7F2EA] rounded-[14px] p-4 text-sm text-[#2F2622] leading-relaxed whitespace-pre-wrap border border-[#E3D9C6]">
+                    <div className="text-[10px] text-[#9A9188] uppercase tracking-[.1em] mb-2">AI Yanıtı</div>
+                    {aiA}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     );
