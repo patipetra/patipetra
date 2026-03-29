@@ -138,9 +138,13 @@ export default function PetlerimPage() {
     setLoading(true);
     try {
       const snap = await getDocs(query(
-        collection(db,'pets'), where('ownerId','==',uid), orderBy('createdAt','desc')
+        collection(db,'pets'), where('ownerId','==',uid)
       ));
-      setPets(snap.docs.map(d=>({id:d.id,...d.data()} as Pet)));
+      // Client'ta tarihe göre sırala (Firestore composite index gerektirmez)
+      const petList = snap.docs
+        .map(d=>({id:d.id,...d.data()} as Pet))
+        .sort((a:any,b:any)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+      setPets(petList);
     } catch(e) { console.error(e); }
     finally { setLoading(false); }
   }
@@ -166,7 +170,10 @@ export default function PetlerimPage() {
       }
       await loadPets(user.uid);
       setView('list'); setSelPet(null); setStep(1);
-    } catch(err:any) { setError('Hata: '+err.message); }
+    } catch(err:any) {
+      console.error('savePet error:', err);
+      setError('Kayıt hatası: ' + (err.message || err.code || 'Bilinmeyen hata'));
+    }
     finally { setSaving(false); }
   }
 
