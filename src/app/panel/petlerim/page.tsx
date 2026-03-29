@@ -245,7 +245,7 @@ export default function PetlerimPage() {
     const updatedPet = { ...selPet, vaccines: updated, isVaccinated: true };
     setPets(prev=>prev.map(p=>p.id===selPet.id?updatedPet:p));
     setSelPet(updatedPet);
-    setVForm({name:'',date:'',nextDate:'',vet:''});
+    setVForm({name:'',date:'',nextDate:'',vet:'',batch:'',reminder:true});
   }
 
   async function removeVaccine(vid: string) {
