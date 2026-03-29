@@ -1,5 +1,9 @@
 @tailwind base;
 
+.safe-area-pb {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
 @keyframes shimmer {
   100% { transform: translateX(100%); }
 }
