@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthChange } from '@/lib/auth';
+import { usePlan } from '@/hooks/usePlan';
 import {
   collection, getDocs, query, where, addDoc,
   updateDoc, deleteDoc, doc, serverTimestamp, orderBy,
@@ -115,6 +116,7 @@ export default function PetlerimPage() {
   const [avatarFile, setAvatarFile] = useState<File|null>(null);
   const [avatarPrev, setAvatarPrev] = useState('');
   const [saving,     setSaving]     = useState(false);
+  const { limits } = usePlan();
   const [error,      setError]      = useState('');
   // AI
   const [aiQ,        setAiQ]        = useState('');
@@ -257,8 +259,9 @@ export default function PetlerimPage() {
             <p className="text-sm text-[#7A7368] mt-1">{pets.length} pet · Tüm sağlık kayıtları burada</p>
           </div>
           <button onClick={()=>{setForm({...EMPTY_PET});setAvatarFile(null);setAvatarPrev('');setSelPet(null);setStep(1);setView('form');}}
-            className="bg-[#C9832E] text-white text-sm font-semibold px-5 py-3 rounded-full hover:bg-[#b87523] transition-all flex items-center gap-2">
-            + Yeni Pet Ekle
+            disabled={pets.length >= limits.maxPets}
+          className={`text-sm font-semibold px-5 py-3 rounded-full transition-all flex items-center gap-2 ${pets.length >= limits.maxPets ? 'bg-[#E3D9C6] text-[#9A9188] cursor-not-allowed' : 'bg-[#C9832E] text-white hover:bg-[#b87523]'}`}>
+            {pets.length >= limits.maxPets ? `Limit Doldu (${limits.maxPets})` : '+ Yeni Pet Ekle'}
           </button>
         </div>
 

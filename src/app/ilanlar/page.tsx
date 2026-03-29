@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CITIES_81 } from '@/data/cities';
+import { usePlan } from '@/hooks/usePlan';
 
 const SPECIES_EMOJI: Record<string,string> = {
   cat:'🐱', dog:'🐶', bird:'🐦', rabbit:'🐰',
@@ -29,6 +30,7 @@ export default function IlanlarPage() {
   const [specFilter,  setSpecFilter]  = useState('');
   const [search,      setSearch]      = useState('');
   const [urgentOnly,  setUrgentOnly]  = useState(false);
+  const { limits } = usePlan();
 
   useEffect(() => { load(); }, []);
 

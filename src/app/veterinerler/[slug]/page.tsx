@@ -7,6 +7,7 @@ import Footer from '@/components/layout/Footer';
 import { onAuthChange } from '@/lib/auth';
 import ReviewSystem from '@/components/ReviewSystem';
 import FavoriteButton from '@/components/FavoriteButton';
+import PlanGate from '@/components/PlanGate';
 import {
   collection, addDoc, getDocs, query,
   where, orderBy, serverTimestamp, doc, getDoc,
