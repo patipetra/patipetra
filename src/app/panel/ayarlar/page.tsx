@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { onAuthChange, logout, resetPassword } from '@/lib/auth';
 import type { User } from 'firebase/auth';
+import { useToast } from '@/components/Toast';
+import { usePushNotification } from '@/hooks/usePushNotification';
 
 export default function AyarlarPage() {
   const { success } = useToast();
