@@ -243,7 +243,7 @@ export default function HizmetDetayPage() {
                             src={`https://maps.google.com/maps?q=${encodeURIComponent((service.businessName||'')+' '+(service.city||'')+(service.district?' '+service.district:''))}&output=embed&z=15`}
                           />
                         </div>
-                        
+                        <a
                           href={`https://maps.google.com/?q=${encodeURIComponent((service.businessName||'')+' '+(service.city||'')+(service.district?' '+service.district:''))}`}
                           target="_blank"
                           rel="noopener noreferrer"

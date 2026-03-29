@@ -463,8 +463,6 @@ export default function PetlerimPage() {
     const spec = SPECIES.find(s=>s.val===selPet.species);
     const upcomingVaccines = (selPet.vaccines||[]).filter(v=>v.nextDate && daysUntil(v.nextDate)<=30 && daysUntil(v.nextDate)>=0);
     const overdueVaccines  = (selPet.vaccines||[]).filter(v=>v.nextDate && daysUntil(v.nextDate)<0);
-    const INPUT = "w-full px-3 py-2 rounded-[10px] bg-[#F7F2EA] border border-[#E3D9C6] text-[#2F2622] text-sm focus:outline-none focus:border-[#C9832E]";
-    const LABEL = "block text-[10px] text-[#9A9188] uppercase tracking-[.1em] mb-1";
     return (
       <div className="min-h-screen bg-[#F7F2EA] lg:ml-[260px]">
         <div className="max-w-[900px] mx-auto px-4 py-8">
@@ -798,7 +796,7 @@ export default function PetlerimPage() {
                   className="w-full px-4 py-3 rounded-[14px] bg-[#F7F2EA] border border-[#E3D9C6] text-sm text-[#2F2622] resize-none focus:outline-none focus:border-[#C9832E]"/>
                 <button onClick={askAI} disabled={!aiQ.trim()||aiLoading}
                   className="w-full py-3 rounded-full bg-[#2F2622] text-white text-sm font-semibold hover:bg-[#5C4A32] disabled:opacity-60">
-                  {aiLoading?'Analiz ediliyor…':'🤖 AI'ye Sor →'}
+                  {aiLoading?'Analiz ediliyor…':'🤖 Sor →'}
                 </button>
                 {aiA && (
                   <div className="bg-[#F7F2EA] rounded-[14px] p-4 text-sm text-[#2F2622] leading-relaxed whitespace-pre-wrap border border-[#E3D9C6]">
