@@ -1,4 +1,5 @@
 'use client';
+import { ListingCardSkeleton } from '@/components/Skeleton';
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -57,7 +58,7 @@ export default function MagazaPage() {
 
         <section className="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-16 py-10">
           {loading ? (
-            <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-[#C9832E] border-t-transparent rounded-full animate-spin"/></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">{Array.from({length:6}).map((_,i)=><ListingCardSkeleton key={i}/>)}</div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-20">
               <div className="text-5xl mb-4">🛒</div>

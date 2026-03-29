@@ -1,4 +1,5 @@
 'use client';
+import { BlogCardSkeleton } from '@/components/Skeleton';
 import { useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
