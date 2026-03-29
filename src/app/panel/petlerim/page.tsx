@@ -19,6 +19,8 @@ interface Vaccine {
   date:     string;
   nextDate: string;
   vet:      string;
+  batch?:   string; // Parti numarası
+  reminder?: boolean;
 }
 interface HealthRecord {
   id:      string;
@@ -26,6 +28,38 @@ interface HealthRecord {
   type:    string;
   note:    string;
   vet:     string;
+  cost?:   string; // Masraf
+  files?:  string[]; // Belge URL'leri
+}
+interface WeightRecord {
+  id:     string;
+  date:   string;
+  weight: number;
+  note?:  string;
+}
+interface Milestone {
+  id:    string;
+  date:  string;
+  title: string;
+  note:  string;
+  emoji: string;
+}
+interface Parasite {
+  id:       string;
+  type:     string; // pire, kene, iç parazit
+  date:     string;
+  nextDate: string;
+  product:  string;
+  vet?:     string;
+}
+interface DailyLog {
+  id:       string;
+  date:     string;
+  mood:     string; // 😊 😐 😟
+  appetite: string; // iyi normal kötü
+  activity: string; // aktif normal pasif
+  poop:     string; // normal anormal yok
+  note?:    string;
 }
 interface Pet {
   id:            string;
@@ -49,6 +83,10 @@ interface Pet {
   notes:         string;
   vaccines:      Vaccine[];
   healthRecords: HealthRecord[];
+  weightHistory: WeightRecord[];
+  milestones:    Milestone[];
+  parasites:     Parasite[];
+  dailyLogs:     DailyLog[];
   ownerId:       string;
   createdAt:     any;
 }
@@ -100,8 +138,17 @@ const EMPTY_PET: Omit<Pet,'id'|'ownerId'|'createdAt'> = {
   isVaccinated:false, isSterilized:false,
   allergies:'', medications:'', diseases:'', dietNotes:'',
   insurance:'', emergencyVet:'', notes:'',
-  vaccines:[], healthRecords:[],
+  vaccines:[], healthRecords:[], weightHistory:[],
+  milestones:[], parasites:[], dailyLogs:[],
 };
+
+const PARASITE_TYPES = ['Pire & Kene','İç Parazit (Kurtlar)','Dış Parazit','Uyuz','Mantar'];
+const MILESTONE_EMOJIS = ['🎂','🏠','💉','✂️','🏆','❤️','🐾','⭐','🎉','🌟'];
+const MOODS = [
+  {val:'great',  label:'Harika',  emoji:'😊'},
+  {val:'normal', label:'Normal',  emoji:'😐'},
+  {val:'bad',    label:'Kötü',    emoji:'😟'},
+];
 
 export default function PetlerimPage() {
   const router   = useRouter();
@@ -110,7 +157,7 @@ export default function PetlerimPage() {
   const [pets,       setPets]       = useState<Pet[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [selPet,     setSelPet]     = useState<Pet|null>(null);
-  const [view,       setView]       = useState<'list'|'detail'|'form'|'vaccine'|'health'>('list');
+  const [view,       setView]       = useState<'list'|'detail'|'form'|'vaccine'|'health'|'weight'|'milestone'|'parasite'|'daily'>('list');
   const [step,       setStep]       = useState(1);
   const [form,       setForm]       = useState<typeof EMPTY_PET>({...EMPTY_PET});
   const [avatarFile, setAvatarFile] = useState<File|null>(null);
@@ -123,9 +170,13 @@ export default function PetlerimPage() {
   const [aiA,        setAiA]        = useState('');
   const [aiLoading,  setAiLoading]  = useState(false);
   // Aşı formu
-  const [vForm, setVForm] = useState({name:'',date:'',nextDate:'',vet:''});
-  // Sağlık formu
-  const [hForm, setHForm] = useState({date:'',type:'Muayene',note:'',vet:''});
+  const [vForm, setVForm] = useState({name:'',date:'',nextDate:'',vet:'',batch:'',reminder:true});
+  const [hForm, setHForm] = useState({date:'',type:'Muayene',note:'',vet:'',cost:''});
+  const [wForm, setWForm] = useState({date:new Date().toISOString().split('T')[0],weight:'',note:''});
+  const [mForm, setMForm] = useState({date:new Date().toISOString().split('T')[0],title:'',note:'',emoji:'🎂'});
+  const [pForm, setPForm] = useState({type:'Pire & Kene',date:'',nextDate:'',product:'',vet:''});
+  const [dForm, setDForm] = useState({date:new Date().toISOString().split('T')[0],mood:'great',appetite:'iyi',activity:'aktif',poop:'normal',note:''});
+  const [activeTab, setActiveTab] = useState<'ozet'|'asılar'|'saglik'|'kilo'|'parazit'|'gunluk'|'milestone'|'ai'>('ozet');
 
   useEffect(() => {
     const unsub = onAuthChange(async u => {
@@ -215,6 +266,63 @@ export default function PetlerimPage() {
     setPets(prev=>prev.map(p=>p.id===selPet.id?updatedPet:p));
     setSelPet(updatedPet);
     setHForm({date:'',type:'Muayene',note:'',vet:''});
+  }
+
+  // ── Kilo kaydı ──────────────────────────────────────────────────────────────
+  async function addWeight() {
+    if (!wForm.weight || !selPet) return;
+    const newW: WeightRecord = {
+      id: Date.now().toString(),
+      date: wForm.date,
+      weight: parseFloat(wForm.weight),
+      note: wForm.note,
+    };
+    const updated = [...(selPet.weightHistory||[]), newW].sort((a,b)=>a.date.localeCompare(b.date));
+    await updateDoc(doc(db,'pets',selPet.id), { weightHistory: updated, weight: wForm.weight });
+    const up = {...selPet, weightHistory: updated, weight: wForm.weight};
+    setPets(prev=>prev.map(p=>p.id===selPet.id?up:p));
+    setSelPet(up);
+    setWForm({date:new Date().toISOString().split('T')[0],weight:'',note:''});
+    setView('detail');
+  }
+
+  // ── Milestone ekle ───────────────────────────────────────────────────────────
+  async function addMilestone() {
+    if (!mForm.title || !selPet) return;
+    const newM: Milestone = { id: Date.now().toString(), ...mForm };
+    const updated = [...(selPet.milestones||[]), newM].sort((a,b)=>b.date.localeCompare(a.date));
+    await updateDoc(doc(db,'pets',selPet.id), { milestones: updated });
+    const up = {...selPet, milestones: updated};
+    setPets(prev=>prev.map(p=>p.id===selPet.id?up:p));
+    setSelPet(up);
+    setMForm({date:new Date().toISOString().split('T')[0],title:'',note:'',emoji:'🎂'});
+    setView('detail');
+  }
+
+  // ── Parazit kaydı ────────────────────────────────────────────────────────────
+  async function addParasite() {
+    if (!pForm.date || !pForm.product || !selPet) return;
+    const newP: Parasite = { id: Date.now().toString(), ...pForm };
+    const updated = [...(selPet.parasites||[]), newP].sort((a,b)=>b.date.localeCompare(a.date));
+    await updateDoc(doc(db,'pets',selPet.id), { parasites: updated });
+    const up = {...selPet, parasites: updated};
+    setPets(prev=>prev.map(p=>p.id===selPet.id?up:p));
+    setSelPet(up);
+    setPForm({type:'Pire & Kene',date:'',nextDate:'',product:'',vet:''});
+    setView('detail');
+  }
+
+  // ── Günlük log ───────────────────────────────────────────────────────────────
+  async function addDailyLog() {
+    if (!selPet) return;
+    const newD: DailyLog = { id: Date.now().toString(), ...dForm };
+    const updated = [...(selPet.dailyLogs||[]), newD].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,90); // Son 90 gün
+    await updateDoc(doc(db,'pets',selPet.id), { dailyLogs: updated });
+    const up = {...selPet, dailyLogs: updated};
+    setPets(prev=>prev.map(p=>p.id===selPet.id?up:p));
+    setSelPet(up);
+    setDForm({date:new Date().toISOString().split('T')[0],mood:'great',appetite:'iyi',activity:'aktif',poop:'normal',note:''});
+    setView('detail');
   }
 
   async function askAI() {
@@ -470,7 +578,121 @@ export default function PetlerimPage() {
                 </div>
               )}
 
-              {/* Aşı Kayıtları */}
+              {/* Tab Menü */}
+              <div className="bg-white rounded-[16px] border border-[rgba(196,169,107,.12)] p-1 mb-4 flex gap-1 overflow-x-auto" style={{scrollbarWidth:'none'}}>
+                {[
+                  {val:'ozet',      label:'📊 Özet'},
+                  {val:'asılar',    label:'💉 Aşılar'},
+                  {val:'saglik',    label:'🏥 Sağlık'},
+                  {val:'kilo',      label:'⚖️ Kilo'},
+                  {val:'parazit',   label:'🦟 Parazit'},
+                  {val:'gunluk',    label:'📅 Günlük'},
+                  {val:'milestone', label:'🏆 Anlar'},
+                  {val:'ai',        label:'🤖 AI'},
+                ].map(t=>(
+                  <button key={t.val} onClick={()=>setActiveTab(t.val as any)}
+                    className={`flex-shrink-0 px-3 py-2 rounded-[10px] text-xs font-medium transition-all whitespace-nowrap ${activeTab===t.val?'bg-[#5C4A32] text-white':'text-[#7A7368] hover:text-[#2F2622]'}`}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* ÖZET TAB */}
+              {activeTab==='ozet' && (
+                <div className="space-y-4">
+                  {/* Hızlı istatistikler */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      {icon:'💉', label:'Aşı',      val:(selPet.vaccines||[]).length,          color:'#C9832E'},
+                      {icon:'🏥', label:'Muayene',   val:(selPet.healthRecords||[]).length,     color:'#1D9E75'},
+                      {icon:'⚖️', label:'Kilo Kay.', val:(selPet.weightHistory||[]).length,    color:'#534AB7'},
+                      {icon:'🦟', label:'Parazit',   val:(selPet.parasites||[]).length,        color:'#D85A30'},
+                    ].map(s=>(
+                      <div key={s.label} className="bg-white rounded-[14px] border border-[rgba(196,169,107,.12)] p-3 text-center">
+                        <div className="text-2xl mb-1">{s.icon}</div>
+                        <div className="font-serif text-xl font-semibold" style={{color:s.color}}>{s.val}</div>
+                        <div className="text-[10px] text-[#9A9188]">{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Canlı sayaçlar */}
+                  <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+                    <h3 className="font-serif text-base font-semibold text-[#2F2622] mb-3">⏱️ Canlı Takip</h3>
+                    <div className="space-y-3">
+                      {selPet.birthDate && (
+                        <div className="flex items-center justify-between p-3 bg-[#F7F2EA] rounded-[12px]">
+                          <div className="text-sm text-[#5C4A32]">🎂 Yaşı</div>
+                          <div className="font-semibold text-sm text-[#2F2622]">{calcAge(selPet.birthDate)}</div>
+                        </div>
+                      )}
+                      {selPet.birthDate && (
+                        <div className="flex items-center justify-between p-3 bg-[#F7F2EA] rounded-[12px]">
+                          <div className="text-sm text-[#5C4A32]">🎂 Sonraki Doğum Günü</div>
+                          <div className="font-semibold text-sm text-[#2F2622]">{(()=>{
+                            const b = new Date(selPet.birthDate);
+                            const now = new Date();
+                            const next = new Date(now.getFullYear(), b.getMonth(), b.getDate());
+                            if (next < now) next.setFullYear(now.getFullYear()+1);
+                            const days = Math.ceil((next.getTime()-now.getTime())/(1000*60*60*24));
+                            return days===0?'🎉 Bugün!':days===1?'Yarın!':days+' gün sonra';
+                          })()}</div>
+                        </div>
+                      )}
+                      {(selPet.vaccines||[]).filter(v=>v.nextDate&&daysUntil(v.nextDate)>=0).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))[0] && (
+                        <div className="flex items-center justify-between p-3 bg-[rgba(201,131,46,.06)] rounded-[12px] border border-[rgba(201,131,46,.2)]">
+                          <div className="text-sm text-[#C9832E]">💉 Sonraki Aşı</div>
+                          <div className="font-semibold text-sm text-[#C9832E]">
+                            {(()=>{const v=(selPet.vaccines||[]).filter(x=>x.nextDate&&daysUntil(x.nextDate)>=0).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))[0]; const d=daysUntil(v.nextDate); return `${v.name} — ${d===0?'Bugün':d+' gün'}`;})()}
+                          </div>
+                        </div>
+                      )}
+                      {(selPet.parasites||[]).filter(p=>p.nextDate&&daysUntil(p.nextDate)>=0).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))[0] && (
+                        <div className="flex items-center justify-between p-3 bg-[rgba(216,90,48,.06)] rounded-[12px] border border-[rgba(216,90,48,.2)]">
+                          <div className="text-sm" style={{color:'#D85A30'}}>🦟 Sonraki Parazit</div>
+                          <div className="font-semibold text-sm" style={{color:'#D85A30'}}>
+                            {(()=>{const p=(selPet.parasites||[]).filter(x=>x.nextDate&&daysUntil(x.nextDate)>=0).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))[0]; const d=daysUntil(p.nextDate); return `${p.type} — ${d===0?'Bugün':d+' gün'}`;})()}
+                          </div>
+                        </div>
+                      )}
+                      {selPet.weight && (selPet.weightHistory||[]).length>0 && (
+                        <div className="flex items-center justify-between p-3 bg-[#F7F2EA] rounded-[12px]">
+                          <div className="text-sm text-[#5C4A32]">⚖️ Son Kilo</div>
+                          <div className="font-semibold text-sm text-[#2F2622]">
+                            {selPet.weight} kg
+                            {(selPet.weightHistory||[]).length>=2 && (()=>{
+                              const h=(selPet.weightHistory||[]);
+                              const diff=h[h.length-1].weight-h[h.length-2].weight;
+                              return diff>0?<span className="text-red-500 ml-1">▲{diff.toFixed(1)}</span>:diff<0?<span className="text-green-500 ml-1">▼{Math.abs(diff).toFixed(1)}</span>:<span className="text-gray-400 ml-1">━</span>;
+                            })()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Son günlük loglar */}
+                  {(selPet.dailyLogs||[]).length>0 && (
+                    <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+                      <h3 className="font-serif text-base font-semibold text-[#2F2622] mb-3">📅 Son 7 Gün</h3>
+                      <div className="space-y-2">
+                        {(selPet.dailyLogs||[]).slice(0,7).map((log:any)=>(
+                          <div key={log.id} className="flex items-center gap-3 p-2 bg-[#F7F2EA] rounded-[10px]">
+                            <div className="text-xs text-[#9A9188] w-20 flex-shrink-0">{log.date}</div>
+                            <span className="text-base">{MOODS.find(m=>m.val===log.mood)?.emoji||'😐'}</span>
+                            <div className="text-xs text-[#5C4A32] flex-1">
+                              İştah: {log.appetite} · Aktivite: {log.activity}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* AŞI TAB */}
+              {activeTab==='asılar' && (
               <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-serif text-lg font-semibold text-[#2F2622]">💉 Aşı Kayıtları</h3>
@@ -505,7 +727,11 @@ export default function PetlerimPage() {
                 )}
               </div>
 
-              {/* Sağlık Kayıtları */}
+              </div>
+              )}
+
+              {/* SAĞLIK TAB */}
+              {activeTab==='saglik' && (
               <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-serif text-lg font-semibold text-[#2F2622]">📋 Sağlık Geçmişi</h3>
@@ -533,7 +759,129 @@ export default function PetlerimPage() {
               </div>
             </div>
 
-            {/* Sağ — AI Asistan */}
+              </div>
+              )}
+
+              {/* KİLO TAB */}
+              {activeTab==='kilo' && (
+                <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-serif text-lg font-semibold text-[#2F2622]">⚖️ Kilo Takibi</h3>
+                    <button onClick={()=>setView('weight')} className="text-xs px-3 py-2 rounded-full bg-[#534AB7] text-white hover:opacity-90">+ Kilo Ekle</button>
+                  </div>
+                  {(selPet.weightHistory||[]).length===0 ? (
+                    <div className="text-center py-6 text-[#9A9188] text-sm">Henüz kilo kaydı yok.</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {[...(selPet.weightHistory||[])].sort((a,b)=>b.date.localeCompare(a.date)).map((w:any,i:number,arr:any[])=>{
+                        const prev = arr[i+1];
+                        const diff = prev ? w.weight - prev.weight : 0;
+                        return (
+                          <div key={w.id} className="flex items-center gap-3 p-3 bg-[#F7F2EA] rounded-[12px]">
+                            <div className="w-10 h-10 rounded-full bg-[#534AB7] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">⚖️</div>
+                            <div className="flex-1">
+                              <div className="font-semibold text-sm text-[#2F2622]">{w.weight} kg</div>
+                              <div className="text-xs text-[#9A9188]">{w.date}{w.note?` · ${w.note}`:''}</div>
+                            </div>
+                            {diff!==0 && <span className={`text-xs font-bold ${diff>0?'text-red-500':'text-green-500'}`}>{diff>0?'▲':'▼'}{Math.abs(diff).toFixed(1)} kg</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* PARAZİT TAB */}
+              {activeTab==='parazit' && (
+                <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-serif text-lg font-semibold text-[#2F2622]">🦟 Parazit Tedavisi</h3>
+                    <button onClick={()=>setView('parasite')} className="text-xs px-3 py-2 rounded-full bg-[#D85A30] text-white hover:opacity-90">+ Tedavi Ekle</button>
+                  </div>
+                  {(selPet.parasites||[]).length===0 ? (
+                    <div className="text-center py-6 text-[#9A9188] text-sm">Henüz parazit kaydı yok.</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {[...(selPet.parasites||[])].sort((a,b)=>b.date.localeCompare(a.date)).map((p:any)=>{
+                        const du = p.nextDate ? daysUntil(p.nextDate) : null;
+                        return (
+                          <div key={p.id} className="border border-[#F7F2EA] rounded-[12px] p-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-semibold text-sm text-[#2F2622]">🦟 {p.type}</span>
+                              <span className="text-xs text-[#9A9188]">{p.date}</span>
+                            </div>
+                            <div className="text-xs text-[#7A7368]">Ürün: {p.product}{p.vet?` · ${p.vet}`:''}</div>
+                            {du!==null && <div className={`text-xs mt-1 font-medium ${du<0?'text-red-500':du<=7?'text-[#C9832E]':'text-green-600'}`}>
+                              {du<0?`⚠️ ${Math.abs(du)} gün gecikmiş`:du===0?'🔴 Bugün!':du<=7?`🔔 ${du} gün sonra`:`✓ ${p.nextDate}`}
+                            </div>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* GÜNLÜK TAB */}
+              {activeTab==='gunluk' && (
+                <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-serif text-lg font-semibold text-[#2F2622]">📅 Günlük Takip</h3>
+                    <button onClick={()=>setView('daily')} className="text-xs px-3 py-2 rounded-full bg-[#1D9E75] text-white hover:opacity-90">+ Bugün Ekle</button>
+                  </div>
+                  {(selPet.dailyLogs||[]).length===0 ? (
+                    <div className="text-center py-6 text-[#9A9188] text-sm">Henüz günlük kayıt yok.</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {(selPet.dailyLogs||[]).slice(0,30).map((log:any)=>(
+                        <div key={log.id} className="border border-[#F7F2EA] rounded-[12px] p-3">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="text-2xl">{MOODS.find(m=>m.val===log.mood)?.emoji}</span>
+                            <span className="font-semibold text-sm text-[#2F2622]">{log.date}</span>
+                            <span className="text-xs text-[#9A9188] ml-auto">{MOODS.find(m=>m.val===log.mood)?.label}</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 text-xs text-center">
+                            <div className="bg-[#F7F2EA] rounded-[8px] p-2"><div className="text-[#9A9188] mb-1">İştah</div><div className="font-medium text-[#2F2622]">{log.appetite}</div></div>
+                            <div className="bg-[#F7F2EA] rounded-[8px] p-2"><div className="text-[#9A9188] mb-1">Aktivite</div><div className="font-medium text-[#2F2622]">{log.activity}</div></div>
+                            <div className="bg-[#F7F2EA] rounded-[8px] p-2"><div className="text-[#9A9188] mb-1">Dışkı</div><div className="font-medium text-[#2F2622]">{log.poop}</div></div>
+                          </div>
+                          {log.note && <div className="text-xs text-[#7A7368] mt-2">{log.note}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* MİLESTONE TAB */}
+              {activeTab==='milestone' && (
+                <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-serif text-lg font-semibold text-[#2F2622]">🏆 Özel Anlar</h3>
+                    <button onClick={()=>setView('milestone')} className="text-xs px-3 py-2 rounded-full bg-[#C9832E] text-white hover:opacity-90">+ An Ekle</button>
+                  </div>
+                  {(selPet.milestones||[]).length===0 ? (
+                    <div className="text-center py-6 text-[#9A9188] text-sm">Henüz özel an eklenmedi.</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {(selPet.milestones||[]).map((m:any)=>(
+                        <div key={m.id} className="flex items-start gap-3 p-3 bg-[#F7F2EA] rounded-[12px]">
+                          <span className="text-3xl flex-shrink-0">{m.emoji}</span>
+                          <div>
+                            <div className="font-semibold text-sm text-[#2F2622]">{m.title}</div>
+                            <div className="text-xs text-[#9A9188] mb-1">{m.date}</div>
+                            {m.note && <div className="text-xs text-[#5C4A32]">{m.note}</div>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* AI TAB */}
+              {activeTab==='ai' && (
             <div className="space-y-4">
               {/* Acil vet */}
               {selPet.emergencyVet && (
@@ -587,11 +935,101 @@ export default function PetlerimPage() {
                 </div>
               )}
             </div>
+              )}
           </div>
         </div>
       </div>
     );
   }
+
+  // ── Kilo Ekle ────────────────────────────────────────────────────────────────
+  if (view==='weight' && selPet) return (
+    <div className="min-h-screen bg-[#F7F2EA] lg:ml-[260px]">
+      <div className="max-w-[600px] mx-auto px-4 py-8">
+        <button onClick={()=>setView('detail')} className="text-sm text-[#7A7368] hover:text-[#2F2622] mb-6 flex items-center gap-1">← {selPet.name}'e Dön</button>
+        <h2 className="font-serif text-2xl font-semibold text-[#2F2622] mb-6">⚖️ Kilo Kaydı Ekle</h2>
+        <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className={LABEL}>Tarih *</label><input type="date" value={wForm.date} onChange={e=>setWForm(p=>({...p,date:e.target.value}))} className={INPUT}/></div>
+            <div><label className={LABEL}>Kilo (kg) *</label><input type="number" step="0.1" value={wForm.weight} onChange={e=>setWForm(p=>({...p,weight:e.target.value}))} placeholder="4.2" className={INPUT}/></div>
+          </div>
+          <div><label className={LABEL}>Not</label><input value={wForm.note||''} onChange={e=>setWForm(p=>({...p,note:e.target.value}))} placeholder="Veteriner ziyareti sonrası..." className={INPUT}/></div>
+          {selPet.weight && <div className="bg-[#F7F2EA] rounded-[12px] p-3 text-sm text-[#5C4A32]">Son kayıt: <strong>{selPet.weight} kg</strong>{wForm.weight?` → ${wForm.weight} kg`:''}</div>}
+          <button onClick={addWeight} disabled={!wForm.weight} className="w-full py-3 rounded-full bg-[#534AB7] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-60">Kilo Kaydet →</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Milestone Ekle ────────────────────────────────────────────────────────────
+  if (view==='milestone' && selPet) return (
+    <div className="min-h-screen bg-[#F7F2EA] lg:ml-[260px]">
+      <div className="max-w-[600px] mx-auto px-4 py-8">
+        <button onClick={()=>setView('detail')} className="text-sm text-[#7A7368] hover:text-[#2F2622] mb-6 flex items-center gap-1">← {selPet.name}'e Dön</button>
+        <h2 className="font-serif text-2xl font-semibold text-[#2F2622] mb-6">🏆 Özel An Ekle</h2>
+        <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-6 space-y-4">
+          <div><label className={LABEL}>Emoji</label>
+            <div className="flex flex-wrap gap-2">{MILESTONE_EMOJIS.map(e=><button key={e} type="button" onClick={()=>setMForm(p=>({...p,emoji:e}))} className={`text-2xl w-10 h-10 rounded-[10px] transition-all ${mForm.emoji===e?'bg-[rgba(201,131,46,.15)] border-2 border-[#C9832E]':'hover:bg-[#F7F2EA]'}`}>{e}</button>)}</div>
+          </div>
+          <div><label className={LABEL}>Tarih *</label><input type="date" value={mForm.date} onChange={e=>setMForm(p=>({...p,date:e.target.value}))} className={INPUT}/></div>
+          <div><label className={LABEL}>Başlık *</label><input value={mForm.title} onChange={e=>setMForm(p=>({...p,title:e.target.value}))} placeholder="İlk veteriner ziyareti, yuvasına geldi..." className={INPUT}/></div>
+          <div><label className={LABEL}>Not</label><textarea value={mForm.note} onChange={e=>setMForm(p=>({...p,note:e.target.value}))} rows={3} className={INPUT+' resize-none'}/></div>
+          <button onClick={addMilestone} disabled={!mForm.title} className="w-full py-3 rounded-full bg-[#C9832E] text-white text-sm font-semibold hover:bg-[#b87523] disabled:opacity-60">Anı Kaydet →</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Parazit Ekle ──────────────────────────────────────────────────────────────
+  if (view==='parasite' && selPet) return (
+    <div className="min-h-screen bg-[#F7F2EA] lg:ml-[260px]">
+      <div className="max-w-[600px] mx-auto px-4 py-8">
+        <button onClick={()=>setView('detail')} className="text-sm text-[#7A7368] hover:text-[#2F2622] mb-6 flex items-center gap-1">← {selPet.name}'e Dön</button>
+        <h2 className="font-serif text-2xl font-semibold text-[#2F2622] mb-6">🦟 Parazit Tedavisi Ekle</h2>
+        <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-6 space-y-4">
+          <div><label className={LABEL}>Tedavi Türü</label>
+            <select value={pForm.type} onChange={e=>setPForm(p=>({...p,type:e.target.value}))} className={INPUT}>
+              {PARASITE_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className={LABEL}>Uygulama Tarihi *</label><input type="date" value={pForm.date} onChange={e=>setPForm(p=>({...p,date:e.target.value}))} className={INPUT}/></div>
+            <div><label className={LABEL}>Sonraki Tarih</label><input type="date" value={pForm.nextDate} onChange={e=>setPForm(p=>({...p,nextDate:e.target.value}))} className={INPUT}/></div>
+          </div>
+          <div><label className={LABEL}>Ürün Adı *</label><input value={pForm.product} onChange={e=>setPForm(p=>({...p,product:e.target.value}))} placeholder="Frontline, Drontal..." className={INPUT}/></div>
+          <div><label className={LABEL}>Veteriner</label><input value={pForm.vet} onChange={e=>setPForm(p=>({...p,vet:e.target.value}))} className={INPUT}/></div>
+          <button onClick={addParasite} disabled={!pForm.date||!pForm.product} className="w-full py-3 rounded-full text-white text-sm font-semibold disabled:opacity-60" style={{background:'#D85A30'}}>Tedaviyi Kaydet →</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Günlük Log Ekle ───────────────────────────────────────────────────────────
+  if (view==='daily' && selPet) return (
+    <div className="min-h-screen bg-[#F7F2EA] lg:ml-[260px]">
+      <div className="max-w-[600px] mx-auto px-4 py-8">
+        <button onClick={()=>setView('detail')} className="text-sm text-[#7A7368] hover:text-[#2F2622] mb-6 flex items-center gap-1">← {selPet.name}'e Dön</button>
+        <h2 className="font-serif text-2xl font-semibold text-[#2F2622] mb-6">📅 Günlük Durum Ekle</h2>
+        <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-6 space-y-4">
+          <div><label className={LABEL}>Tarih</label><input type="date" value={dForm.date} onChange={e=>setDForm(p=>({...p,date:e.target.value}))} className={INPUT}/></div>
+          <div><label className={LABEL}>Genel Ruh Hali</label>
+            <div className="flex gap-3">{MOODS.map(m=><button key={m.val} type="button" onClick={()=>setDForm(p=>({...p,mood:m.val}))} className={`flex-1 py-3 rounded-[12px] border-[1.5px] text-center transition-all ${dForm.mood===m.val?'border-[#C9832E] bg-[rgba(201,131,46,.06)]':'border-[#E3D9C6]'}`}><div className="text-2xl">{m.emoji}</div><div className="text-xs text-[#5C4A32] mt-1">{m.label}</div></button>)}</div>
+          </div>
+          {[
+            {k:'appetite', label:'İştah', opts:['çok iyi','iyi','normal','az','yok']},
+            {k:'activity', label:'Aktivite', opts:['çok aktif','aktif','normal','pasif','yatıyor']},
+            {k:'poop',     label:'Dışkı',    opts:['normal','yumuşak','sulu','sert','yok']},
+          ].map(f=>(
+            <div key={f.k}><label className={LABEL}>{f.label}</label>
+              <div className="flex flex-wrap gap-2">{f.opts.map(o=><button key={o} type="button" onClick={()=>setDForm(p=>({...p,[f.k]:o}))} className={`px-3 py-1 rounded-full text-xs border-[1.5px] transition-all ${(dForm as any)[f.k]===o?'bg-[#5C4A32] text-white border-[#5C4A32]':'border-[#E3D9C6] text-[#5C4A32]'}`}>{o}</button>)}</div>
+            </div>
+          ))}
+          <div><label className={LABEL}>Not</label><textarea value={dForm.note||''} onChange={e=>setDForm(p=>({...p,note:e.target.value}))} rows={3} placeholder="Bugün nasıldı?" className={INPUT+' resize-none'}/></div>
+          <button onClick={addDailyLog} className="w-full py-3 rounded-full bg-[#1D9E75] text-white text-sm font-semibold hover:opacity-90">Günü Kaydet →</button>
+        </div>
+      </div>
+    </div>
+  );
 
   // ── Aşı Ekle ─────────────────────────────────────────────────────────────────
   if (view==='vaccine' && selPet) return (
