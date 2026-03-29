@@ -6,6 +6,7 @@ import { onAuthChange, logout, resetPassword } from '@/lib/auth';
 import type { User } from 'firebase/auth';
 
 export default function AyarlarPage() {
+  const { success } = useToast();
   const router = useRouter();
   const [user,    setUser]    = useState<User|null>(null);
   const [loading, setLoading] = useState(true);
