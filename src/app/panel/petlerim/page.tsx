@@ -265,7 +265,7 @@ export default function PetlerimPage() {
     const updatedPet = { ...selPet, healthRecords: updated };
     setPets(prev=>prev.map(p=>p.id===selPet.id?updatedPet:p));
     setSelPet(updatedPet);
-    setHForm({date:'',type:'Muayene',note:'',vet:''});
+    setHForm({date:'',type:'Muayene',note:'',vet:'',cost:''});
   }
 
   // ── Kilo kaydı ──────────────────────────────────────────────────────────────
