@@ -12,7 +12,7 @@ import { CITIES_81 } from '@/data/cities';
 import type { User } from 'firebase/auth';
 
 export default function ProfilPage() {
-  const { success, error } = useToast();
+  const { success: showSuccess, error: showError } = useToast();
   const router  = useRouter();
   const [user,    setUser]    = useState<User|null>(null);
   const [loading, setLoading] = useState(true);

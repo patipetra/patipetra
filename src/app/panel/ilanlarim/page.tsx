@@ -55,7 +55,7 @@ const EMPTY: Omit<Listing, 'id'|'status'|'viewCount'|'favoriteCount'|'createdAt'
 
 export default function IlanlarimPage() {
   const { limits, plan } = usePlan();
-  const { success, error } = useToast();
+  const { success, error: showError } = useToast();
   const router  = useRouter();
   const [user,     setUser]     = useState<User|null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
