@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useToast } from '@/components/Toast';
 import { usePlan } from '@/hooks/usePlan';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -54,6 +55,7 @@ const EMPTY: Omit<Listing, 'id'|'status'|'viewCount'|'favoriteCount'|'createdAt'
 
 export default function IlanlarimPage() {
   const { limits, plan } = usePlan();
+  const { success, error } = useToast();
   const router  = useRouter();
   const [user,     setUser]     = useState<User|null>(null);
   const [listings, setListings] = useState<Listing[]>([]);

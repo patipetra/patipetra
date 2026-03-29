@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthChange } from '@/lib/auth';
 import { usePlan } from '@/hooks/usePlan';
+import { useToast } from '@/components/Toast';
 import {
   collection, getDocs, query, where, addDoc,
   updateDoc, deleteDoc, doc, serverTimestamp, orderBy,
@@ -164,6 +165,7 @@ export default function PetlerimPage() {
   const [avatarPrev, setAvatarPrev] = useState('');
   const [saving,     setSaving]     = useState(false);
   const { limits } = usePlan();
+  const { success, error: toastError } = useToast();
   const [error,      setError]      = useState('');
   // AI
   const [aiQ,        setAiQ]        = useState('');
@@ -222,10 +224,13 @@ export default function PetlerimPage() {
         await addDoc(collection(db,'pets'), { ...payload, createdAt: serverTimestamp() });
       }
       await loadPets(user.uid);
+      success(selPet?.id ? 'Pet güncellendi ✓' : 'Pet pasaportu oluşturuldu ✓');
       setView('list'); setSelPet(null); setStep(1);
     } catch(err:any) {
       console.error('savePet error:', err);
-      setError('Kayıt hatası: ' + (err.message || err.code || 'Bilinmeyen hata'));
+      const msg = 'Kayıt hatası: ' + (err.message || err.code || 'Bilinmeyen hata');
+      setError(msg);
+      toastError(msg);
     }
     finally { setSaving(false); }
   }
@@ -283,6 +288,7 @@ export default function PetlerimPage() {
     setPets(prev=>prev.map(p=>p.id===selPet.id?up:p));
     setSelPet(up);
     setWForm({date:new Date().toISOString().split('T')[0],weight:'',note:''});
+    success('Kilo kaydı eklendi ⚖️');
     setView('detail');
   }
 
@@ -296,6 +302,7 @@ export default function PetlerimPage() {
     setPets(prev=>prev.map(p=>p.id===selPet.id?up:p));
     setSelPet(up);
     setMForm({date:new Date().toISOString().split('T')[0],title:'',note:'',emoji:'🎂'});
+    success('Özel an kaydedildi 🏆');
     setView('detail');
   }
 
@@ -309,6 +316,7 @@ export default function PetlerimPage() {
     setPets(prev=>prev.map(p=>p.id===selPet.id?up:p));
     setSelPet(up);
     setPForm({type:'Pire & Kene',date:'',nextDate:'',product:'',vet:''});
+    success('Parazit tedavisi kaydedildi 🦟');
     setView('detail');
   }
 
@@ -322,6 +330,7 @@ export default function PetlerimPage() {
     setPets(prev=>prev.map(p=>p.id===selPet.id?up:p));
     setSelPet(up);
     setDForm({date:new Date().toISOString().split('T')[0],mood:'great',appetite:'iyi',activity:'aktif',poop:'normal',note:''});
+    success('Günlük durum kaydedildi 📅');
     setView('detail');
   }
 

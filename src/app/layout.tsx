@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import PWAInstaller from '@/components/PWAInstaller';
+import ToastProvider from '@/components/Toast';
 import PopupManager from '@/components/PopupManager';
 import './globals.css';
 
@@ -199,8 +200,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}}/>
       </head>
       <body>
+        <ToastProvider>
         {children}
         <PWAInstaller/>
+        </ToastProvider>
         <PopupManager/>
       </body>
     </html>
