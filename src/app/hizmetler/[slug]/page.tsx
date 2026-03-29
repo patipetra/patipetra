@@ -226,6 +226,37 @@ export default function HizmetDetayPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Konum & Harita */}
+                  <div>
+                    <div className="text-[10px] uppercase tracking-[.1em] text-[#9A9188] mb-2">📍 Konum & Yol Tarifi</div>
+                    <PlanGate require="contact" blur={true}>
+                      <div className="space-y-2">
+                        <div className="rounded-[12px] overflow-hidden border border-[#E3D9C6]">
+                          <iframe
+                            width="100%"
+                            height="200"
+                            style={{border:0}}
+                            loading="lazy"
+                            allowFullScreen
+                            referrerPolicy="no-referrer-when-downgrade"
+                            src={`https://maps.google.com/maps?q=${encodeURIComponent((service.businessName||'')+' '+(service.city||'')+(service.district?' '+service.district:''))}&output=embed&z=15`}
+                          />
+                        </div>
+                        
+                          href={`https://maps.google.com/?q=${encodeURIComponent((service.businessName||'')+' '+(service.city||'')+(service.district?' '+service.district:''))}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex items-center justify-center gap-2 py-2 rounded-[10px] bg-[#4285F4] text-white text-sm font-semibold hover:bg-[#3367D6] transition-colors">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                          Google Maps'te Aç & Yol Tarifi Al
+                        </a>
+                        {service.address && (
+                          <div className="text-xs text-[#7A7368] text-center">{service.address}</div>
+                        )}
+                      </div>
+                    </PlanGate>
+                  </div>
                 </div>
               )}
 

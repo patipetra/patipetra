@@ -247,6 +247,27 @@ export default function IlanDetayPage() {
                 )}
               </div>
 
+              {/* Konum Haritası */}
+              {listing.city && (
+                <div className="bg-white rounded-[20px] border border-[rgba(196,169,107,.12)] p-4 mb-4">
+                  <div className="text-xs font-semibold text-[#7A7368] mb-2">📍 İlan Konumu</div>
+                  <div className="rounded-[12px] overflow-hidden mb-2">
+                    <iframe
+                      width="100%"
+                      height="160"
+                      style={{border:0}}
+                      loading="lazy"
+                      allowFullScreen
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={`https://maps.google.com/maps?q=${encodeURIComponent((listing.city||'')+(listing.district?' '+listing.district:''))}&output=embed&z=12`}
+                    />
+                  </div>
+                  <div className="text-xs text-[#9A9188] text-center">
+                    📍 {listing.city}{listing.district?`, ${listing.district}`:''}
+                  </div>
+                </div>
+              )}
+
               {/* Güvenlik uyarısı */}
               <div className="bg-[rgba(201,131,46,.06)] border border-[rgba(201,131,46,.15)] rounded-[16px] p-4">
                 <div className="text-xs font-semibold text-[#8B7355] mb-2">🛡️ Güvenli Sahiplendirme</div>
