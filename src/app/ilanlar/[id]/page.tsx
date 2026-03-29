@@ -33,7 +33,7 @@ export default function IlanDetayPage() {
     async function load() {
       try {
         const snap = await getDoc(doc(db,'listings',id));
-        if (snap.exists()) setListing({id:snap.id,...snap.data()});
+        if (snap.exists()) const d = {id:snap.id,...snap.data()} as any; setListing(d); if(d.name) document.title = `${d.name} | Patıpetra`;
       } catch(e) { console.error(e); }
       finally { setLoading(false); }
     }

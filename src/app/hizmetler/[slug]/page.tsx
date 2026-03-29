@@ -55,7 +55,7 @@ export default function HizmetDetayPage() {
           const d = await getDoc(doc(db,'services',slug));
           if (d.exists()) setService({id:d.id,...d.data()});
         } else {
-          setService({id:snap.docs[0].id,...snap.docs[0].data()});
+          const s = {id:snap.docs[0].id,...snap.docs[0].data()} as any; setService(s); if(s.businessName) document.title = `${s.businessName} | Patıpetra`;
         }
       } catch(e) { console.error(e); }
       finally { setLoading(false); }

@@ -59,6 +59,11 @@ const nextConfig = {
 
   // Performans
   compress: true,
+
+  // Production'da console.log'ları kaldır
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
+  },
   poweredByHeader: false,
   reactStrictMode: true,
 
